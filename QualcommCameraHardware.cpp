@@ -2912,7 +2912,6 @@ bool QualcommCameraHardware::initRawSnapshot()
     }
     ALOGV("initRawSnapshot X");
     return true;
-
 }
 
 bool QualcommCameraHardware::initRaw(bool initJpegHeap)
@@ -3268,10 +3267,6 @@ void QualcommCameraHardware::deinitRaw()
         int cnt = 0;
         deallocate_ion_memory(&raw_main_ion_fd[cnt], &raw_ion_info_fd[cnt]);
 #endif
-    }
-    if(NULL != mJpegMapped) {
-        mJpegMapped->release(mJpegMapped);
-        mJpegMapped = NULL;
     }
     if( mPreviewWindow != NULL ) {
         ALOGE("deinitRaw , clearing/cancelling thumbnail buffers:");
