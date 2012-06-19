@@ -227,11 +227,6 @@ typedef void (*data_callback_timestamp)(nsecs_t timestamp,
         virtual status_t sendCommand(int32_t cmd, int32_t arg1, int32_t arg2) = 0;
         
         /**
-         * function stub. keep compatible.
-         */
-        virtual status_t stub() = 0;
-        
-        /**
          * Release the hardware resources owned by this object.  Note that this is
          * *not* done in the destructor.
          */
