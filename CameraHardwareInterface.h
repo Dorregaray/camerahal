@@ -46,12 +46,19 @@ namespace android {
     typedef void (*data_callback)(int32_t msgType,
                                   const sp<IMemory>& dataPtr,
                                   void* user);
-    
+#ifdef OMAP_ENHANCEMENT
+typedef void (*data_callback_timestamp)(nsecs_t timestamp,
+                                        int32_t msgType,
+                                        const sp<IMemory>& dataPtr,
+                                        void* user,
+                                        uint32_t offset,
+                                        uint32_t stride);
+#else
     typedef void (*data_callback_timestamp)(nsecs_t timestamp,
                                             int32_t msgType,
                                             const sp<IMemory>& dataPtr,
                                             void* user);
-    
+#endif
     /**
      * CameraHardwareInterface.h defines the interface to the
      * camera hardware abstraction layer, used for setting and getting
@@ -127,17 +134,20 @@ namespace android {
          */
         virtual status_t    startPreview() = 0;
         
+#ifdef USE_GETBUFFERINFO
         /**
          * Query the recording buffer information from HAL.
          * This is needed because the opencore expects the buffer
          * information before starting the recording.
          */
         virtual status_t    getBufferInfo(sp<IMemory>& Frame, size_t *alignedSize) = 0;
-        
+#endif
+#ifdef USE_ENCODEDATA
         /**
          * Encode the YUV data.
          */
         virtual void        encodeData() = 0;
+#endif
         
         /**
          * Only used if overlays are used for camera preview.
@@ -243,7 +253,6 @@ namespace android {
     extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo);
     /* HAL should return NULL if it fails to open camera hardware. */
     extern "C" sp<CameraHardwareInterface> HAL_openCameraHardware(int cameraId);
-    
 };  // namespace android
 
 #endif
