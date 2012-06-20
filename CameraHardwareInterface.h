@@ -225,7 +225,12 @@ typedef void (*data_callback_timestamp)(nsecs_t timestamp,
          * Send command to camera driver.
          */
         virtual status_t sendCommand(int32_t cmd, int32_t arg1, int32_t arg2) = 0;
-        
+#if 0 /* probably we don't need that */
+        /**
+         * function stub. keep compatible.
+         */
+        virtual status_t stub() = 0;
+#endif
         /**
          * Release the hardware resources owned by this object.  Note that this is
          * *not* done in the destructor.
