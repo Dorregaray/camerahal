@@ -19,7 +19,7 @@
 
 #define LOG_TAG "CameraHAL"
 
-//#define HARDCODE_PARAMS 1 /* to disable getParameters() call and use hardcodes */
+#define HARDCODE_PARAMS 1 /* to disable getParameters() call and use hardcodes */
 
 #define MAX_CAMERAS_SUPPORTED 2
 #define GRALLOC_USAGE_PMEM_PRIVATE_ADSP GRALLOC_USAGE_PRIVATE_0
@@ -473,8 +473,11 @@ int camera_set_preview_window(struct camera_device * device,
     params.getPreviewSize(&preview_width, &preview_height);
 #endif
     int hal_pixel_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
-
+#ifdef HARDCODE_PARAMS
+    const char *str_preview_format = "640 x 480";
+#else
     const char *str_preview_format = params.getPreviewFormat();
+#endif
     LOGI("%s: preview format %s", __FUNCTION__, str_preview_format);
 
     //Enable panorama without camera application "hacks"
