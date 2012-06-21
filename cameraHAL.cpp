@@ -19,6 +19,8 @@
 
 #define LOG_TAG "CameraHAL"
 
+//#define HARDCODE_PARAMS 1 /* to disable getParameters() call and use hardcodes */
+
 #define MAX_CAMERAS_SUPPORTED 2
 #define GRALLOC_USAGE_PMEM_PRIVATE_ADSP GRALLOC_USAGE_PRIVATE_0
 
@@ -463,8 +465,13 @@ int camera_set_preview_window(struct camera_device * device,
 
     int preview_width;
     int preview_height;
+#ifdef HARDCODE_PARAMS
+    preview_width = 640;
+    preview_height = 480;
+#else
     CameraParameters params(gCameraHals[dev->cameraid]->getParameters());
     params.getPreviewSize(&preview_width, &preview_height);
+#endif
     int hal_pixel_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
 
     const char *str_preview_format = params.getPreviewFormat();
@@ -843,7 +850,80 @@ char* camera_get_parameters(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
+#ifdef HARDCODE_PARAMS
+    camParams.set("antibanding-values","off,50hz,60hz,auto");
+    camParams.set("antibanding","off");
+    camParams.set("auto-exposure-values","frame-average,center-weighted,spot-metering");
+    camParams.set("auto-exposure","frame-average");
+    camParams.set("continuous-af-mode","");
+    camParams.set("continuous-af","caf-off");
+    camParams.set("contrast-max","10");
+    camParams.set("contrast","8");
+    camParams.set("effect-values","none,mono,negative,solarize,sepia,posterize,whiteboard,blackboard,aqua");
+    camParams.set("effect","none");
+    camParams.set("exposure-compensation-step","0.166667");
+    camParams.set("exposure-compensation","0");
+    camParams.set("focal-length","4.31");
+    camParams.set("focus-mode-values","");
+    camParams.set("focus-mode","auto");
+    camParams.set("horizontal-view-angle","54.8");
+    camParams.set("iso-values","auto,ISO_HJR,ISO100,ISO200,ISO400,ISO800,ISO1600");
+    camParams.set("iso","auto");
+    camParams.set("jpeg-quality","90");
+    camParams.set("jpeg-thumbnail-height","384");
+    camParams.set("jpeg-thumbnail-quality","90");
+    camParams.set("jpeg-thumbnail-size-values","512x288,480x288,432x288,512x384,352x288,0x0");
+    camParams.set("jpeg-thumbnail-width","512");
+    camParams.set("lensshade-values","enable,disable");
+    camParams.set("lensshade","enable");
+    camParams.set("luma-adaptation","3");
+    camParams.set("max-exposure-compensation","12");
+    camParams.set("max-zoom","61");
+    camParams.set("min-exposure-compensation","-12");
+    camParams.set("num-snaps-per-shutter","1");
+    camParams.set("orientation","landscape");
+    camParams.set("picture-format-values","jpeg,raw");
+    camParams.set("picture-format","jpeg");
+    camParams.set("picture-size-values","640x480,352x288,320x240,176x144");
+    camParams.set("picture-size","640x480");
+    camParams.set("preferred-preview-size-for-video","640x480");
+    camParams.set("preview-format-values","yuv420sp");
+    camParams.set("preview-format","yuv420sp");
+    camParams.set("preview-frame-rate-mode","frame-rate-auto");
+    camParams.set("preview-frame-rate-values","31");
+    camParams.set("preview-frame-rate","31");
+    camParams.set("preview-size-values","640x480,576x432,480x320,384x288,352x288,320x240,240x160,176x144");
+    camParams.set("preview-size","640x480");
+    camParams.set("record-size","");
+    camParams.set("recording-hint","false");
+    camParams.set("saturation-max","10");
+    camParams.set("saturation","6");
+    camParams.set("scene-detect-values","off,on");
+    camParams.set("scene-detect","off");
+    camParams.set("scene-mode-values","auto,action,portrait,landscape,night,night-portrait,theatre,beach,snow,sunset,steadyphoto,fireworks,sports,party,candlelight,backlight,flowers");
+    camParams.set("scene-mode","auto");
+    camParams.set("selectable-zone-af-values","");
+    camParams.set("selectable-zone-af","auto");
+    camParams.set("sharpness-max","30");
+    camParams.set("sharpness","30");
+    camParams.set("skinToneEnhancement-values","enable,disable");
+    camParams.set("skinToneEnhancement","disable");
+    camParams.set("strtextures","OFF");
+    camParams.set("touch-af-aec-values","");
+    camParams.set("touch-af-aec","touch-off");
+    camParams.set("touch-index-aec","-1x-1");
+    camParams.set("touch-index-af","-1x-1");
+    camParams.set("vertical-view-angle","42.5");
+    camParams.set("video-frame-format","yuv420sp");
+    camParams.set("video-zoom-support","false");
+    camParams.set("whitebalance-values","auto,incandescent,fluorescent,daylight,cloudy-daylight");
+    camParams.set("whitebalance","auto");
+    camParams.set("zoom-ratios","");
+    camParams.set("zoom-supported","true");
+    camParams.set("zoom","0");
+#else
     camParams = gCameraHals[dev->cameraid]->getParameters();
+#endif
 #if 0
     camParams.dump();
 #endif
