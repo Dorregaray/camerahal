@@ -20,6 +20,7 @@
 #define LOG_TAG "CameraHAL"
 
 #define HARDCODE_PARAMS 1 /* disable getParameters() call and use hardcodes */
+//#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
 
 #define MAX_CAMERAS_SUPPORTED 2
 #define GRALLOC_USAGE_PMEM_PRIVATE_ADSP GRALLOC_USAGE_PRIVATE_0
@@ -493,7 +494,6 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
 int camera_set_preview_window(struct camera_device * device,
                               struct preview_stream_ops *window)
 {
-    int rv = -EINVAL;
     int min_bufs = -1;
     int kBufferCount = 4;
     priv_camera_device_t* dev = NULL;
@@ -501,7 +501,7 @@ int camera_set_preview_window(struct camera_device * device,
     LOGI("%s+++,device %p", __FUNCTION__,device);
 
     if(!device)
-        return rv;
+        return -EINVAL;
 
     dev = (priv_camera_device_t*) device;
 
@@ -576,10 +576,10 @@ int camera_set_preview_window(struct camera_device * device,
                                 wrap_set_crop_hook,
                                 wrap_queue_buffer_hook,
                                 (void *)dev);
-    gCameraHals[dev->cameraid]->setOverlay(dev->overlay);
-    LOGI("%s---,rv %d", __FUNCTION__,rv);
 
-    return rv;
+    gCameraHals[dev->cameraid]->setOverlay(dev->overlay);
+
+    return 0;
 }
 
 void camera_set_callbacks(struct camera_device * device,
@@ -900,14 +900,16 @@ int camera_set_parameters(struct camera_device * device, const char *params)
 
     String8 params_str8(params);
     camParams.unflatten(params_str8);
-#if 0
+#ifdef DUMP_PARAMS
     camParams.dump();
 #endif
-#ifndef HARDCODE_PARAMS
+#ifdef HARDCODE_PARAMS
+    rv = 0;
+#else
     rv = gCameraHals[dev->cameraid]->setParameters(camParams);
 #endif
 
-#if 0
+#ifdef DUMP_PARAMS
     camParams.dump();
 #endif
     LOGI("%s--- rv %d", __FUNCTION__,rv);
@@ -933,7 +935,7 @@ char* camera_get_parameters(struct camera_device * device)
 #else
     camParams = gCameraHals[dev->cameraid]->getParameters();
 #endif
-#if 0
+#ifdef DUMP_PARAMS
     camParams.dump();
 #endif
 
@@ -955,7 +957,7 @@ char* camera_get_parameters(struct camera_device * device)
     params = (char*) malloc(sizeof(char) * (params_str8.length()+1));
     strcpy(params, params_str8.string());
 
-#if 0
+#ifdef DUMP_PARAMS
     camParams.dump();
 #endif
     LOGI("%s---", __FUNCTION__);
