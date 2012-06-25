@@ -383,8 +383,7 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
         data->release(data);
     }
 
-	LOGI("%s---", __FUNCTION__);
-
+    LOGI("%s---", __FUNCTION__);
 }
 
 /*******************************************************************
@@ -589,6 +588,7 @@ int camera_set_preview_window(struct camera_device * device,
 
     gCameraHals[dev->cameraid]->setOverlay(dev->overlay);
 
+    LOGI("%s---", __FUNCTION__);
     return 0;
 }
 
