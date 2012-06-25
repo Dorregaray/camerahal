@@ -679,6 +679,8 @@ int camera_start_preview(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
+    gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_PREVIEW_FRAME);
+
     rv = gCameraHals[dev->cameraid]->startPreview();
     LOGI("%s--- rv %d", __FUNCTION__,rv);
 
@@ -749,6 +751,8 @@ int camera_start_recording(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
+
+    gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_VIDEO_FRAME);
 
     rv = gCameraHals[dev->cameraid]->startRecording();
     LOGI("%s--- rv %d", __FUNCTION__,rv);
@@ -860,6 +864,11 @@ int camera_take_picture(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
+
+    gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_SHUTTER |
+        CAMERA_MSG_POSTVIEW_FRAME |
+        CAMERA_MSG_RAW_IMAGE |
+        CAMERA_MSG_COMPRESSED_IMAGE);
 
     rv = gCameraHals[dev->cameraid]->takePicture();
 
