@@ -619,7 +619,7 @@ void camera_enable_msg_type(struct camera_device * device, int32_t msg_type)
     if (msg_type & CAMERA_MSG_RAW_IMAGE_NOTIFY) {
         msg_type &= ~CAMERA_MSG_RAW_IMAGE_NOTIFY;
         msg_type |= CAMERA_MSG_RAW_IMAGE;
-	}
+    }
 
     dump_msg(__FUNCTION__, msg_type);
 
@@ -698,6 +698,8 @@ void camera_stop_preview(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
+    gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_PREVIEW_FRAME);
+
     gCameraHals[dev->cameraid]->stopPreview();
     LOGI("%s---", __FUNCTION__);
 }
@@ -770,6 +772,8 @@ void camera_stop_recording(struct camera_device * device)
         return;
 
     dev = (priv_camera_device_t*) device;
+
+    gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_VIDEO_FRAME);
 
     gCameraHals[dev->cameraid]->stopRecording();
 
