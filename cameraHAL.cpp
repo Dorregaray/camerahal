@@ -1000,7 +1000,8 @@ int camera_send_command(struct camera_device * device,
     int rv = -EINVAL;
     priv_camera_device_t* dev = NULL;
 
-    LOGI("%s: cmd %i,device %p", __FUNCTION__, cmd,device);
+    LOGI("%s: cmd %i, arg1: %i arg2: %i, device %p", __FUNCTION__,
+	 cmd, arg1, arg2, device);
 
     if(!device)
         return rv;
