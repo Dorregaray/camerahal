@@ -21,6 +21,7 @@
 #define LOG_TAG "CameraHAL"
 
 #define HARDCODE_PARAMS 1 /* disable getParameters() call and use hardcodes */
+#define NO_SEND_COMMAND   /* do not call libcamera's sendCommand */
 //#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
 
 #define MAX_CAMERAS_SUPPORTED 2
@@ -1001,14 +1002,24 @@ int camera_send_command(struct camera_device * device,
     priv_camera_device_t* dev = NULL;
 
     LOGI("%s: cmd %i, arg1: %i arg2: %i, device %p", __FUNCTION__,
-	 cmd, arg1, arg2, device);
+        cmd, arg1, arg2, device);
 
     if(!device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
 
+#ifdef NO_SEND_COMMAND
+    /* The libcamera does not support any commands required by the
+     * ICS camera. Just return NO_ERROR here instead of passing
+     * the command to libcamera instead the setDisplayOrientation
+     * will fail and ICS camera will get exception when starting
+     * preview.
+     */
+    rv = 0;
+#else
     rv = gCameraHals[dev->cameraid]->sendCommand(cmd, arg1, arg2);
+#endif
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
