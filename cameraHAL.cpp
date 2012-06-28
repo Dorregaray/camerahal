@@ -275,8 +275,7 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     data = (void *)((char *)(heap->base()) + offset);
 
     LOGI("%s: data: %p size: %i", __FUNCTION__, data, size);
-
-    LOGI(" offset:0x%x ",  offset);
+    LOGI(" offset: %lu", (unsigned long)offset);
 
     //#define DUMP_CAPTURE_JPEG
 #ifdef DUMP_CAPTURE_JPEG
@@ -1014,9 +1013,12 @@ int camera_send_command(struct camera_device * device,
      * ICS camera. Just return NO_ERROR here instead of passing
      * the command to libcamera instead the setDisplayOrientation
      * will fail and ICS camera will get exception when starting
-     * preview.
+     * preview. Otherwise return BAD_VALUE.
      */
-    rv = 0;
+    if (cmd == CAMERA_CMD_SET_DISPLAY_ORIENTATION)
+        rv = 0;
+    else
+        rv = -EINVAL;
 #else
     rv = gCameraHals[dev->cameraid]->sendCommand(cmd, arg1, arg2);
 #endif
