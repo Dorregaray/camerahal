@@ -23,6 +23,7 @@
 #define HARDCODE_PARAMS 1 /* disable getParameters() call and use hardcodes */
 #define NO_SEND_COMMAND   /* do not call libcamera's sendCommand */
 //#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
+#define CAMERA_HAS_NO_AUTOFOCUS 1
 
 #define MAX_CAMERAS_SUPPORTED 2
 #define GRALLOC_USAGE_PMEM_PRIVATE_ADSP GRALLOC_USAGE_PRIVATE_0
@@ -855,9 +856,11 @@ int camera_auto_focus(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
-
+#ifdef CAMERA_HAS_NO_AUTOFOCUS
+    rv = 0;
+#else
     rv = gCameraHals[dev->cameraid]->autoFocus();
-
+#endif
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
@@ -873,8 +876,11 @@ int camera_cancel_auto_focus(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
-
+#ifdef CAMERA_HAS_NO_AUTOFOCUS
+    rv = 0;
+#else
     rv = gCameraHals[dev->cameraid]->cancelAutoFocus();
+#endif
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
