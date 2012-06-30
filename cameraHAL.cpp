@@ -687,6 +687,18 @@ int camera_start_preview(struct camera_device * device)
     if(!device)
         return rv;
 
+    /* startPreview has been called before setting the preview
+     * window. Start the camera with initial buffers because the
+     * CameraService expects the preview to be enabled while
+     * setting a valid preview window.
+     * As our libcamera does not provide such functionality just
+     * return NO_ERROR here as this is exactly what libcamera2
+     * for ICS does.
+     */
+    if (dev->window == 0) {
+        return 0;
+    }
+
     dev = (priv_camera_device_t*) device;
 
     gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_PREVIEW_FRAME);
