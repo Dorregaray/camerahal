@@ -693,6 +693,8 @@ int camera_start_preview(struct camera_device * device)
     if(!device)
         return rv;
 
+    dev = (priv_camera_device_t*) device;
+
     /* startPreview has been called before setting the preview
      * window. Start the camera with initial buffers because the
      * CameraService expects the preview to be enabled while
@@ -705,13 +707,11 @@ int camera_start_preview(struct camera_device * device)
         return 0;
     }
 
-    dev = (priv_camera_device_t*) device;
-
     gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_PREVIEW_FRAME);
 
     rv = gCameraHals[dev->cameraid]->startPreview();
-    LOGI("%s--- rv %d", __FUNCTION__,rv);
 
+    LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
 
