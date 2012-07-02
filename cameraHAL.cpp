@@ -71,23 +71,23 @@ static int camera_get_camera_info(int camera_id, struct camera_info *info);
 int camera_get_number_of_cameras(void);
 
 static struct hw_module_methods_t camera_module_methods = {
-open: camera_device_open
+    open: camera_device_open
 };
 
 camera_module_t HAL_MODULE_INFO_SYM = {
-common: {
-tag: HARDWARE_MODULE_TAG,
-version_major: 1,
-version_minor: 0,
-id: CAMERA_HARDWARE_MODULE_ID,
-name: "7x30 CameraHal Module",
-author: "Zhibin Wu",
-methods: &camera_module_methods,
-dso: NULL, /* remove compilation warnings */
-reserved: {0}, /* remove compilation warnings */
-},
-get_number_of_cameras: camera_get_number_of_cameras,
-get_camera_info: camera_get_camera_info,
+    common: {
+        tag: HARDWARE_MODULE_TAG,
+        version_major: 1,
+        version_minor: 0,
+        id: CAMERA_HARDWARE_MODULE_ID,
+        name: "7x30 CameraHal Module",
+        author: "Zhibin Wu",
+        methods: &camera_module_methods,
+        dso: NULL, /* remove compilation warnings */
+        reserved: {0}, /* remove compilation warnings */
+    },
+    get_number_of_cameras: camera_get_number_of_cameras,
+    get_camera_info: camera_get_camera_info,
 };
 
 typedef struct priv_camera_device {
@@ -167,6 +167,7 @@ static void wrap_set_crop_hook(void *data,
     dev = (priv_camera_device_t*) data;
     LOGI("%s---: %i %i %i %i", __FUNCTION__, x, y, w, h);
 }
+
 //QiSS ME for preview
 static void wrap_queue_buffer_hook(void *data, void* buffer)
 {
@@ -182,13 +183,13 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
 
     window = dev->window;
 
-	//QiSS ME fix video preview crash
+    //QiSS ME fix video preview crash
     if(window == 0)
-		return;
+        return;
 
     heap =  gCameraHals[dev->cameraid]->getPreviewHeap();
     if(heap == 0)
-		return;
+        return;
 
     int offset = (int)buffer;
     char *frame = (char *)(heap->base()) + offset;
@@ -306,8 +307,8 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     LOGI(" mem:%p,mem->data%p ",  mem,mem->data);
 
     memcpy(mem->data, data, size);
-    LOGI("%s---", __FUNCTION__);
 
+    LOGI("%s---", __FUNCTION__);
     return mem;
 }
 
@@ -326,9 +327,10 @@ static void wrap_notify_callback(int32_t msg_type, int32_t ext1,
 
     if (dev->notify_callback)
         dev->notify_callback(msg_type, ext1, ext2, dev->user);
-    LOGI("%s---", __FUNCTION__);
 
+    LOGI("%s---", __FUNCTION__);
 }
+
 //QiSS ME for capture
 static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
                                void* user)
@@ -346,7 +348,7 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
 
     if(msg_type ==CAMERA_MSG_RAW_IMAGE)
     {
-    	gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_RAW_IMAGE);
+        gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_RAW_IMAGE);
         return;
     }
 
@@ -354,11 +356,11 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
 
     if (dev->data_callback)
         dev->data_callback(msg_type, data, 0, NULL, dev->user);
-	LOGI("%s---", __FUNCTION__);
 
+    LOGI("%s---", __FUNCTION__);
 }
-//QiSS ME for record
 
+//QiSS ME for record
 static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
                                          const sp<IMemory>& dataPtr, void* user)
 {
@@ -394,74 +396,74 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
 #ifdef HARDCODE_PARAMS
 void CameraHAL_initParameters(android::CameraParameters &params)
 {
-      params.set("antibanding-values", "off,50hz,60hz,auto");
-      params.set("antibanding", "off");
-      params.set("auto-exposure-values", "frame-average,center-weighted,spot-metering");
-      params.set("auto-exposure", "frame-average");
-      params.set("continuous-af-values", "");
-      params.set("continuous-af-mode","");
-      params.set("continuous-af", "caf-off");
-      params.set("contrast", "8");
-      params.set("effect-values", "none,mono,negative,solarize,sepia,posterize,whiteboard,blackboard,aqua");
-      params.set("effect", "none");
-      params.set("exposure-compensation-step", "0.166667");
-      params.set("exposure-compensation", "0");
-      params.set("face-detection-values", "");
-      params.set("face-detection", "off");
-      params.set("focal-length", "4.31");
-      params.set("focus-mode-values", "infinity");
-      params.set("focus-mode", "auto");
-      params.set("horizontal-view-angle", "54.8");
-      params.set("iso-values", "auto,ISO_HJR,ISO100,ISO200,ISO400,ISO800,ISO1600");
-      params.set("iso", "auto");
-      params.set("jpeg-quality", "90");
-      params.set("jpeg-thumbnail-height", "384");
-      params.set("jpeg-thumbnail-quality", "90");
-      params.set("jpeg-thumbnail-size-values", "512x288,480x288,432x288,512x384,352x288,0x0");
-      params.set("jpeg-thumbnail-width", "512");
-      params.set("lensshade-values", "enable,disable");
-      params.set("lensshade", "enable");
-      params.set("luma-adaptation", "3");
-      params.set("max-exposure-compensation", "12");
-      params.set("max-sharpness", "30");
-      params.set("max-zoom", "61");
-      params.set("min-exposure-compensation", "-12");
-      params.set("orientation","landscape");
-      params.set("picture-format-values", "jpeg,raw");
-      params.set("picture-format", "jpeg");
-      params.set("picture-size-values","640x480,352x288,320x240,176x144");
-      params.set("picture-size", "640x480");
-      params.set("preview-format-values", "yuv420sp");
-      params.set("preview-format", "yuv420sp");
-      params.set("preview-frame-rate-mode", "frame-rate-auto");
-      params.set("preview-size-values","640x480,576x432,480x320,384x288,352x288,320x240,240x160,176x144");
-      params.set("preview-size","640x480");
-      params.set("record-size", "");
-      params.set("recording-hint","false");
-      params.set("saturation-max","10");
-      params.set("saturation", "6");
-      params.set("scene-detect-values","off,on");
-      params.set("scene-detect","off");
-      params.set("scene-mode-values", "auto,action,portrait,landscape,night,night-portrait,theatre,beach,snow,sunset,steadyphoto,fireworks,sports,party,candlelight,off");
-      params.set("scene-mode", "auto");
-      params.set("selectable-zone-af-values","");
-      params.set("selectable-zone-af","auto");
-      params.set("sharpness", "30");
-      params.set("skinToneEnhancement-values","enable,disable");
-      params.set("skinToneEnhancement", "disable");
-      params.set("strtextures", "OFF");
-      params.set("touch-af-aec-values", "");
-      params.set("touch-af-aec", "touch-off");
-      params.set("touch-index-aec", "-1x-1");
-      params.set("touch-index-af", "-1x-1");
-      params.set("vertical-view-angle", "42.5");
-      params.set("video-frame-format","yuv420sp");
-      params.set("video-zoom-support", "false");
-      params.set("whitebalance-values", "auto,incandescent,fluorescent,daylight,cloudy-daylight");
-      params.set("whitebalance", "auto");
-      params.set("zoom-ratios", "");
-      params.set("zoom-supported", "true");
-      params.set("zoom", "0");
+    params.set("antibanding-values", "off,50hz,60hz,auto");
+    params.set("antibanding", "off");
+    params.set("auto-exposure-values", "frame-average,center-weighted,spot-metering");
+    params.set("auto-exposure", "frame-average");
+    params.set("continuous-af-values", "");
+    params.set("continuous-af-mode","");
+    params.set("continuous-af", "caf-off");
+    params.set("contrast", "8");
+    params.set("effect-values", "none,mono,negative,solarize,sepia,posterize,whiteboard,blackboard,aqua");
+    params.set("effect", "none");
+    params.set("exposure-compensation-step", "0.166667");
+    params.set("exposure-compensation", "0");
+    params.set("face-detection-values", "");
+    params.set("face-detection", "off");
+    params.set("focal-length", "4.31");
+    params.set("focus-mode-values", "infinity");
+    params.set("focus-mode", "auto");
+    params.set("horizontal-view-angle", "54.8");
+    params.set("iso-values", "auto,ISO_HJR,ISO100,ISO200,ISO400,ISO800,ISO1600");
+    params.set("iso", "auto");
+    params.set("jpeg-quality", "90");
+    params.set("jpeg-thumbnail-height", "384");
+    params.set("jpeg-thumbnail-quality", "90");
+    params.set("jpeg-thumbnail-size-values", "512x288,480x288,432x288,512x384,352x288,0x0");
+    params.set("jpeg-thumbnail-width", "512");
+    params.set("lensshade-values", "enable,disable");
+    params.set("lensshade", "enable");
+    params.set("luma-adaptation", "3");
+    params.set("max-exposure-compensation", "12");
+    params.set("max-sharpness", "30");
+    params.set("max-zoom", "61");
+    params.set("min-exposure-compensation", "-12");
+    params.set("orientation","landscape");
+    params.set("picture-format-values", "jpeg,raw");
+    params.set("picture-format", "jpeg");
+    params.set("picture-size-values","640x480,352x288,320x240,176x144");
+    params.set("picture-size", "640x480");
+    params.set("preview-format-values", "yuv420sp");
+    params.set("preview-format", "yuv420sp");
+    params.set("preview-frame-rate-mode", "frame-rate-auto");
+    params.set("preview-size-values","640x480,576x432,480x320,384x288,352x288,320x240,240x160,176x144");
+    params.set("preview-size","640x480");
+    params.set("record-size", "");
+    params.set("recording-hint","false");
+    params.set("saturation-max","10");
+    params.set("saturation", "6");
+    params.set("scene-detect-values","off,on");
+    params.set("scene-detect","off");
+    params.set("scene-mode-values", "auto,action,portrait,landscape,night,night-portrait,theatre,beach,snow,sunset,steadyphoto,fireworks,sports,party,candlelight,off");
+    params.set("scene-mode", "auto");
+    params.set("selectable-zone-af-values","");
+    params.set("selectable-zone-af","auto");
+    params.set("sharpness", "30");
+    params.set("skinToneEnhancement-values","enable,disable");
+    params.set("skinToneEnhancement", "disable");
+    params.set("strtextures", "OFF");
+    params.set("touch-af-aec-values", "");
+    params.set("touch-af-aec", "touch-off");
+    params.set("touch-index-aec", "-1x-1");
+    params.set("touch-index-af", "-1x-1");
+    params.set("vertical-view-angle", "42.5");
+    params.set("video-frame-format","yuv420sp");
+    params.set("video-zoom-support", "false");
+    params.set("whitebalance-values", "auto,incandescent,fluorescent,daylight,cloudy-daylight");
+    params.set("whitebalance", "auto");
+    params.set("zoom-ratios", "");
+    params.set("zoom-supported", "true");
+    params.set("zoom", "0");
 }
 #endif
 
@@ -549,6 +551,7 @@ int camera_set_preview_window(struct camera_device * device,
 
     int preview_width;
     int preview_height;
+
 #ifdef HARDCODE_PARAMS
     preview_width = 640;
     preview_height = 480;
@@ -556,12 +559,15 @@ int camera_set_preview_window(struct camera_device * device,
     CameraParameters params(gCameraHals[dev->cameraid]->getParameters());
     params.getPreviewSize(&preview_width, &preview_height);
 #endif
+
     int hal_pixel_format = HAL_PIXEL_FORMAT_YCrCb_420_SP;
+
 #ifdef HARDCODE_PARAMS
     const char *str_preview_format = "640 x 480";
 #else
     const char *str_preview_format = params.getPreviewFormat();
 #endif
+
     LOGI("%s: preview format %s", __FUNCTION__, str_preview_format);
 
     //Enable panorama without camera application "hacks"
@@ -619,7 +625,6 @@ void camera_set_callbacks(struct camera_device * device,
                                              wrap_data_callback_timestamp, (void *)dev);
 
     LOGI("%s---", __FUNCTION__);
-
 }
 
 void camera_enable_msg_type(struct camera_device * device, int32_t msg_type)
@@ -778,10 +783,9 @@ int camera_start_recording(struct camera_device * device)
     dev = (priv_camera_device_t*) device;
 
     gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_VIDEO_FRAME);
-
     rv = gCameraHals[dev->cameraid]->startRecording();
-    LOGI("%s--- rv %d", __FUNCTION__,rv);
 
+    LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
 
@@ -802,6 +806,7 @@ void camera_stop_recording(struct camera_device * device)
 
     //QiSS ME force start preview when recording stop
     gCameraHals[dev->cameraid]->startPreview();
+
     LOGI("%s---", __FUNCTION__);
 }
 
@@ -818,6 +823,7 @@ int camera_recording_enabled(struct camera_device * device)
     dev = (priv_camera_device_t*) device;
 
     rv = gCameraHals[dev->cameraid]->recordingEnabled();
+
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
@@ -941,9 +947,11 @@ int camera_set_parameters(struct camera_device * device, const char *params)
 
     String8 params_str8(params);
     camParams.unflatten(params_str8);
+
 #ifdef DUMP_PARAMS
     camParams.dump();
 #endif
+
 #ifdef HARDCODE_PARAMS
     rv = 0;
 #else
@@ -953,6 +961,7 @@ int camera_set_parameters(struct camera_device * device, const char *params)
 #ifdef DUMP_PARAMS
     camParams.dump();
 #endif
+
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
@@ -976,6 +985,7 @@ char* camera_get_parameters(struct camera_device * device)
 #else
     camParams = gCameraHals[dev->cameraid]->getParameters();
 #endif
+
 #ifdef DUMP_PARAMS
     camParams.dump();
 #endif
@@ -992,6 +1002,7 @@ char* camera_get_parameters(struct camera_device * device)
         camParams.set("front-camera-mode", "mirror");
     }
 #endif
+
     camParams.set("orientation", "landscape");
 
     params_str8 = camParams.flatten();
@@ -1001,6 +1012,7 @@ char* camera_get_parameters(struct camera_device * device)
 #ifdef DUMP_PARAMS
     camParams.dump();
 #endif
+
     LOGI("%s---", __FUNCTION__);
     return params;
 }
@@ -1035,8 +1047,6 @@ int camera_send_command(struct camera_device * device,
      */
     if (cmd == CAMERA_CMD_SET_DISPLAY_ORIENTATION)
         rv = 0;
-    else
-        rv = -EINVAL;
 #else
     rv = gCameraHals[dev->cameraid]->sendCommand(cmd, arg1, arg2);
 #endif
@@ -1069,7 +1079,6 @@ int camera_dump(struct camera_device * device, int fd)
         return rv;
 
     dev = (priv_camera_device_t*) device;
-
 
     // rv = gCameraHals[dev->cameraid]->dump(fd);
     return rv;
