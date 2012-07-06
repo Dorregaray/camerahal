@@ -438,7 +438,7 @@ void CameraHAL_initParameters(android::CameraParameters &params)
     params.set("preview-frame-rate-mode", "frame-rate-auto");
     params.set("preview-size-values","640x480,576x432,480x320,384x288,352x288,320x240,240x160,176x144");
     params.set("preview-size","640x480");
-    params.set("record-size", "");
+    params.set("record-size", "640x480");
     params.set("recording-hint","false");
     params.set("saturation-max","10");
     params.set("saturation", "6");
@@ -470,8 +470,8 @@ void CameraHAL_initParameters(android::CameraParameters &params)
 void CameraHAL_FixupParams(android::CameraParameters &camParams)
 {
     const char *preferred_size = "640x480";
-    const char *preview_frame_rates  = "30,27,24,15";
-    const char *preferred_rate = "30";
+    const char *preview_frame_rates = "31,27,24,15";
+    const char *preferred_rate = "31";
 
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
@@ -556,7 +556,7 @@ int camera_set_preview_window(struct camera_device * device,
     preview_width = 640;
     preview_height = 480;
 #else
-    CameraParameters params(gCameraHals[dev->cameraid]->getParameters());
+    CameraParameters params = gCameraHals[dev->cameraid]->getParameters();
     params.getPreviewSize(&preview_width, &preview_height);
 #endif
 
