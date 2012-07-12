@@ -644,6 +644,11 @@ void camera_stop_preview(struct camera_device * device)
 
     gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_PREVIEW_FRAME);
 
+    /* Don't send the stopPreview to lower layers if previewWindow */
+    if (dev->window == 0) {
+        return;
+    }
+
     gCameraHals[dev->cameraid]->stopPreview();
     LOGI("%s---", __FUNCTION__);
 }
