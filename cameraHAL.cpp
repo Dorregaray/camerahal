@@ -356,6 +356,10 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
     if (dev->data_callback)
         dev->data_callback(msg_type, data, 0, NULL, dev->user);
 
+    if ( NULL != data ) {
+        data->release(data);
+    }
+
     LOGI("%s---", __FUNCTION__);
 }
 
