@@ -401,25 +401,14 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     const char *preferred_size = "640x480";
     const char *preview_frame_rates = "31,27,24,15";
     const char *preferred_rate = "31";
+    const char *fps_supported_ranges = "(5,31)";
 
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
 
-    camParams.set(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO,
-                  preferred_size);
-
-    camParams.set(android::CameraParameters::KEY_MAX_SHARPNESS, "30");
-    camParams.set(android::CameraParameters::KEY_MAX_CONTRAST, "10");
-    camParams.set(android::CameraParameters::KEY_MAX_SATURATION, "10");
-    camParams.set("num-snaps-per-shutter", "1");
-
-    if (!camParams.get(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES)) {
-        camParams.set(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES,
-                      preview_frame_rates);
-    }
-
-    if (!camParams.get(android::CameraParameters::KEY_PREVIEW_FRAME_RATE)) {
-        camParams.set(CameraParameters::KEY_PREVIEW_FRAME_RATE, preferred_rate);
+    if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES)) {
+        camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES,
+                      preferred_size);
     }
 
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES)) {
@@ -430,6 +419,30 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     if (!camParams.get(CameraParameters::KEY_VIDEO_SIZE)) {
         camParams.set(CameraParameters::KEY_VIDEO_SIZE, preferred_size);
     }
+
+    if (!camParams.get(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO)) {
+        camParams.set(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO,
+                  preferred_size);
+    }
+
+    if (!camParams.get(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES)) {
+        camParams.set(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES,
+                      preview_frame_rates);
+    }
+
+    if (!camParams.get(android::CameraParameters::KEY_PREVIEW_FRAME_RATE)) {
+        camParams.set(CameraParameters::KEY_PREVIEW_FRAME_RATE, preferred_rate);
+    }
+
+    if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE)) {
+        camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE,
+                      fps_supported_ranges);
+    }
+
+    camParams.set(android::CameraParameters::KEY_MAX_SHARPNESS, "30");
+    camParams.set(android::CameraParameters::KEY_MAX_CONTRAST, "10");
+    camParams.set(android::CameraParameters::KEY_MAX_SATURATION, "10");
+    camParams.set("num-snaps-per-shutter", "1");
 }
 
 int camera_set_preview_window(struct camera_device * device,
