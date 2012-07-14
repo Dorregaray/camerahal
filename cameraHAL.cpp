@@ -399,9 +399,9 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
 void CameraHAL_FixupParams(android::CameraParameters &camParams)
 {
     const char *preferred_size = "640x480";
-    const char *preview_frame_rates = "31,27,24,15";
-    const char *preferred_rate = "31";
-    const char *fps_supported_ranges = "(5,31)";
+    const char *preview_frame_rates = "30,24,15";
+    const char *preferred_rate = "30";
+    const char *fps_supported_ranges = "(15,30)";
 
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
