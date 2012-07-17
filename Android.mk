@@ -1,4 +1,3 @@
-ifeq ($(BOARD_USES_HTC_CAMERA),true)
 
 LOCAL_PATH:= $(call my-dir)
 
@@ -38,4 +37,3 @@ endif
 
 include $(BUILD_SHARED_LIBRARY)
 
-endif
