@@ -144,13 +144,13 @@ static void dump_msg(const char *tag, int msg_type)
 static void wrap_set_fd_hook(void *data, int fd)
 {
     priv_camera_device_t* dev = NULL;
-    //LOGI("%s+++: data %p", __FUNCTION__, data);
+    LOGI("%s+++: data %p", __FUNCTION__, data);
 
     if(!data)
         return;
 
     dev = (priv_camera_device_t*) data;
-    //LOGI("%s---: fd %i", __FUNCTION__, fd);
+    LOGI("%s---: fd %i", __FUNCTION__, fd);
 }
 
 static void wrap_set_crop_hook(void *data,
@@ -173,7 +173,7 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     sp<IMemoryHeap> heap;
     priv_camera_device_t* dev = NULL;
     preview_stream_ops* window = NULL;
-    //LOGI("%s+++: %p", __FUNCTION__,data);
+    LOGI("%s+++: %p", __FUNCTION__,data);
 
     if(!data)
         return;
@@ -193,8 +193,8 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     int offset = (int)buffer;
     char *frame = (char *)(heap->base()) + offset;
 
-    //LOGI("%s: base:%p offset:%i frame:%p", __FUNCTION__,
-    //     heap->base(), offset, frame);
+    LOGI("%s: base:%p offset:%i frame:%p", __FUNCTION__,
+         heap->base(), offset, frame);
 
     int stride;
     void *vaddr;
@@ -211,7 +211,7 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
                                 0, 0, width, height, &vaddr)) {
         // the code below assumes YUV, not RGB
         memcpy(vaddr, frame, width * height * 3 / 2);
-        //LOGI("%s: copy frame to gralloc buffer", __FUNCTION__);
+        LOGI("%s: copy frame to gralloc buffer", __FUNCTION__);
     } else {
         LOGE("%s: could not lock gralloc buffer", __FUNCTION__);
         goto skipframe;
