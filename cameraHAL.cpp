@@ -231,11 +231,11 @@ skipframe:
     int written;
     if (frameCnt >= 100 && frameCnt <= 109 ) {
         char path[128];
-        snprintf(path, sizeof(path), "/data/%d_preview.yuv", frameCnt);
+        snprintf(path, sizeof(path), "/sdcard/%d_preview.yuv", frameCnt);
         int file_fd = open(path, O_RDWR | O_CREAT, 0666);
         LOGI("dumping preview frame %d", frameCnt);
         if (file_fd < 0) {
-            LOGE("cannot open file:%s (error:%i)\n", path, file_fd);
+            LOGE("cannot open file:%s (error:%i)\n", path, errno);
         }
         else
         {
@@ -283,11 +283,11 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     static int frameCnt = 0;
     int written;
     char path[128];
-    snprintf(path, sizeof(path), "/data/%d_capture.jpg", frameCnt);
+    snprintf(path, sizeof(path), "/sdcard/%d_capture.jpg", frameCnt);
     int file_fd = open(path, O_RDWR | O_CREAT, 0666);
     LOGI("dumping capture jpeg %d", frameCnt);
     if (file_fd < 0) {
-        LOGE("cannot open file:%s (error:%i)\n", path, file_fd);
+        LOGE("cannot open file:%s (error:%i)\n", path, errno);
     }
     else
     {
