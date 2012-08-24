@@ -665,6 +665,11 @@ int camera_preview_enabled(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
+    /* Not starting preview until window is being set */
+    if (dev->window == 0) {
+        return 0;
+    }
+
     rv = gCameraHals[dev->cameraid]->previewEnabled();
 
     LOGI("%s--- rv %d", __FUNCTION__,rv);
