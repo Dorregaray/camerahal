@@ -640,8 +640,6 @@ int camera_start_preview(struct camera_device * device)
         return 0;
     }
 
-    gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_PREVIEW_FRAME);
-
     rv = gCameraHals[dev->cameraid]->startPreview();
 
     LOGI("%s--- rv %d", __FUNCTION__,rv);
@@ -658,8 +656,6 @@ void camera_stop_preview(struct camera_device * device)
         return;
 
     dev = (priv_camera_device_t*) device;
-
-    gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_PREVIEW_FRAME);
 
     /* Don't send the stopPreview to lower layers if previewWindow */
     if (dev->window == 0) {
