@@ -410,6 +410,11 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
 
+    if (camParams.get("record-size")) {
+        camParams.set(CameraParameters::KEY_VIDEO_SIZE,
+                      camParams.get("record-size"));
+    }
+
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES)) {
         camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES,
                       preferred_size);
@@ -418,6 +423,10 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES)) {
         camParams.set(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES,
                       preferred_size);
+    }
+
+    if (!camParams.get(CameraParameters::KEY_VIDEO_SIZE)) {
+        camParams.set(CameraParameters::KEY_VIDEO_SIZE, preferred_size);
     }
 
     if (!camParams.get(CameraParameters::KEY_VIDEO_SIZE)) {
@@ -461,10 +470,14 @@ void CameraHAL_SetupParams(android::CameraParameters &camParams)
     }
 
     /* Init video_width, video_height, orig_video_width and orig_video_height */
-    camParams.set("record-size", record_size);
+    if (!camParams.get("record-size")) {
+        camParams.set("record-size", record_size);
+    }
 
     /* Init display_width and display_height */
-    camParams.set(CameraParameters::KEY_PREVIEW_SIZE, record_size);
+    if (!camParams.get(CameraParameters::KEY_PREVIEW_SIZE)) {
+        camParams.set(CameraParameters::KEY_PREVIEW_SIZE, record_size);
+    }
 }
 
 int camera_set_preview_window(struct camera_device * device,
