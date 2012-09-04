@@ -402,7 +402,7 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
 
 void CameraHAL_FixupParams(android::CameraParameters &camParams)
 {
-    const char *preferred_size = "640x480";
+    const char *preferred_size = "1280x1024";
     const char *preview_frame_rates = "30,24,15";
     const char *preferred_rate = "30";
     const char *fps_supported_ranges = "(15,30)";
@@ -466,7 +466,7 @@ void CameraHAL_SetupParams(android::CameraParameters &camParams)
     /* Copy the record-size value from CameraParameters::KEY_VIDEO_SIZE if exists */
     const char *record_size = camParams.get(CameraParameters::KEY_VIDEO_SIZE);
     if (record_size == 0) {
-        record_size = "640x480";
+        record_size = "1280x1024";
     }
 
     /* Init video_width, video_height, orig_video_width and orig_video_height */
