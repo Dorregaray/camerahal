@@ -149,13 +149,12 @@ static void dump_msg(const char *tag, int msg_type)
 static void wrap_set_fd_hook(void *data, int fd)
 {
     priv_camera_device_t* dev = NULL;
-    LOGI("%s+++: data %p", __FUNCTION__, data);
+    //LOGV("%s+++: data %p", __FUNCTION__, data);
 
     if(!data)
         return;
 
     dev = (priv_camera_device_t*) data;
-    LOGI("%s---: fd %i", __FUNCTION__, fd);
 }
 
 static void wrap_set_crop_hook(void *data,
@@ -163,13 +162,12 @@ static void wrap_set_crop_hook(void *data,
                                uint32_t w, uint32_t h)
 {
     priv_camera_device_t* dev = NULL;
-    LOGI("%s+++: %p", __FUNCTION__,data);
+    //LOGV("%s+++: %p", __FUNCTION__,data);
 
     if(!data)
         return;
 
     dev = (priv_camera_device_t*) data;
-    LOGI("%s---: %i %i %i %i", __FUNCTION__, x, y, w, h);
 }
 
 //QiSS ME for preview
@@ -178,7 +176,7 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     sp<IMemoryHeap> heap;
     priv_camera_device_t* dev = NULL;
     preview_stream_ops* window = NULL;
-    LOGI("%s+++: %p", __FUNCTION__,data);
+    //LOGV("%s+++: %p", __FUNCTION__,data);
 
     if(!data)
         return;
@@ -216,7 +214,7 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
                                 0, 0, width, height, &vaddr)) {
         // the code below assumes YUV, not RGB
         memcpy(vaddr, frame, width * height * 3 / 2);
-        LOGI("%s: copy frame to gralloc buffer", __FUNCTION__);
+        //LOGV("%s: copy frame to gralloc buffer", __FUNCTION__);
     } else {
         LOGE("%s: could not lock gralloc buffer", __FUNCTION__);
         goto skipframe;
@@ -254,7 +252,7 @@ skipframe:
     }
     frameCnt++;
 #endif
-    LOGI("%s---: ", __FUNCTION__);
+    //LOGV("%s---: ", __FUNCTION__);
 
     return;
 }
@@ -1127,7 +1125,7 @@ done:
 /* Ugly stuff - ignore SIGFPE */
 void sigfpe_handle(int s)
 {
-    LOGE("Received SIGFPE. Ignoring\n");
+    //LOGV("Received SIGFPE. Ignoring\n");
 }
 
 /* open device handle to one of the cameras
