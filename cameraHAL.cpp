@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <cutils/log.h>
 #include <ui/OverlayHtc.h>
@@ -1123,6 +1124,12 @@ done:
  * implementation of camera_module functions
  *******************************************************************/
 
+/* Ugly stuff - ignore SIGFPE */
+void sigfpe_handle(int s)
+{
+    LOGE("Received SIGFPE. Ignoring\n");
+}
+
 /* open device handle to one of the cameras
  *
  * assume camera service will keep singleton of each camera
@@ -1141,6 +1148,8 @@ int camera_device_open(const hw_module_t* module, const char* name,
 
     //android::Mutex::Autolock lock(gCameraDeviceLock);
 
+    /* add SIGFPE handler */
+    signal(SIGFPE, sigfpe_handle);
 
     LOGI("camera_device open+++");
 
