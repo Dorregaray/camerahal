@@ -196,8 +196,8 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     int offset = (int)buffer;
     char *frame = (char *)(heap->base()) + offset;
 
-    LOGI("%s: base:%p offset:%i frame:%p", __FUNCTION__,
-         heap->base(), offset, frame);
+    //LOGV("%s: base:%p offset:%i frame:%p", __FUNCTION__,
+    //     heap->base(), offset, frame);
 
     int stride;
     void *vaddr;
