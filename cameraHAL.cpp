@@ -984,8 +984,6 @@ char* camera_get_parameters(struct camera_device * device)
     }
 #endif
 
-    camParams.set("orientation", "landscape");
-
     params_str8 = camParams.flatten();
     params = (char*) malloc(sizeof(char) * (params_str8.length()+1));
     strcpy(params, params_str8.string());
@@ -1287,12 +1285,12 @@ static const CameraInfo sCameraInfo[] = {
     {
         FIRST_CAMERA_FACING,
         FIRST_CAMERA_ORIENTATION,  /* orientation */
-        0, /* mode (FIXME should be CAMERA_MODE_2D) */
+        1, /* CAMERA_MODE_2D */
     },
     {
         CAMERA_FACING_FRONT,
         270, /* orientation */
-        0, /* mode (FIXME should be CAMERA_MODE_2D) */
+        1, /* CAMERA_MODE_2D */
     }
 };
 #endif
@@ -1309,12 +1307,7 @@ int camera_get_camera_info(int camera_id, struct camera_info *info)
     android::HAL_getCameraInfo(camera_id, &cameraInfo);
 
     info->facing = cameraInfo.facing;
-    //info->orientation = cameraInfo.orientation;
-    if(info->facing == 1) {
-        info->orientation = 270;
-    } else {
-        info->orientation = 90;
-    }
+    info->orientation = cameraInfo.orientation;
 #endif
 
     LOGI("%s: id:%i faceing:%i orientation: %i", __FUNCTION__,camera_id, info->facing, info->orientation);
