@@ -627,6 +627,11 @@ void camera_disable_msg_type(struct camera_device * device, int32_t msg_type)
 
     dev = (priv_camera_device_t*) device;
 
+    /* The camera app disables the shutter too early which leads to crash.
+     * Leaving it enabled. */
+    if (msg_type == CAMERA_MSG_SHUTTER)
+        return;
+
     gCameraHals[dev->cameraid]->disableMsgType(msg_type);
     LOGI("%s---", __FUNCTION__);
 
