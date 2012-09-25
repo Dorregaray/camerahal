@@ -457,15 +457,13 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
                       fps_supported_ranges);
     }
 
-    if (!camParams.get(CameraParameters::KEY_SUPPORTED_FOCUS_MODES)) {
-        camParams.set(CameraParameters::KEY_SUPPORTED_FOCUS_MODES,
-                      CameraParameters::FOCUS_MODE_INFINITY);
-    }
+#ifdef CAMERA_HAS_NO_AUTOFOCUS
+    camParams.set(CameraParameters::KEY_SUPPORTED_FOCUS_MODES,
+                  CameraParameters::FOCUS_MODE_INFINITY);
 
-    if (!camParams.get(CameraParameters::KEY_FOCUS_MODE)) {
-        camParams.set(CameraParameters::KEY_FOCUS_MODE,
-                      CameraParameters::FOCUS_MODE_INFINITY);
-    }
+    camParams.set(CameraParameters::KEY_FOCUS_MODE,
+                  CameraParameters::FOCUS_MODE_INFINITY);
+#endif
 
     camParams.set(android::CameraParameters::KEY_MAX_SHARPNESS, "30");
     camParams.set(android::CameraParameters::KEY_MAX_CONTRAST, "10");
