@@ -436,6 +436,10 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
         camParams.set(CameraParameters::KEY_VIDEO_SIZE, preferred_size);
     }
 
+    if (!camParams.get(CameraParameters::KEY_PREVIEW_SIZE)) {
+        camParams.set(CameraParameters::KEY_PREVIEW_SIZE, preferred_size);
+    }
+
     if (!camParams.get(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO)) {
         camParams.set(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO,
                   preferred_size);
@@ -469,28 +473,6 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     camParams.set(android::CameraParameters::KEY_MAX_CONTRAST, "10");
     camParams.set(android::CameraParameters::KEY_MAX_SATURATION, "10");
     camParams.set("num-snaps-per-shutter", "1");
-}
-
-/*
- * Make sure some crucial parameters are set in form understandable by libcamera
- */
-void CameraHAL_SetupParams(android::CameraParameters &camParams)
-{
-    /* Copy the record-size value from CameraParameters::KEY_VIDEO_SIZE if exists */
-    const char *record_size = camParams.get(CameraParameters::KEY_VIDEO_SIZE);
-    if (record_size == 0) {
-        record_size = "640x480";
-    }
-
-    /* Init video_width, video_height, orig_video_width and orig_video_height */
-    if (!camParams.get("record-size")) {
-        camParams.set("record-size", record_size);
-    }
-
-    /* Init display_width and display_height */
-    if (!camParams.get(CameraParameters::KEY_PREVIEW_SIZE)) {
-        camParams.set(CameraParameters::KEY_PREVIEW_SIZE, record_size);
-    }
 }
 
 int camera_set_preview_window(struct camera_device * device,
@@ -957,8 +939,6 @@ int camera_set_parameters(struct camera_device * device, const char *params)
 #ifdef DUMP_PARAMS
     camParams.dump();
 #endif
-
-    CameraHAL_SetupParams(camParams);
 
     rv = gCameraHals[dev->cameraid]->setParameters(camParams);
 
