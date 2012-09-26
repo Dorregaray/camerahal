@@ -20,10 +20,9 @@
 
 #define LOG_TAG "CameraHAL"
 
-#define NO_SEND_COMMAND   /* don't call libcamera's sendCommand */
+#define NO_SEND_COMMAND   /* do not call libcamera's sendCommand */
 //#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
 #define CAMERA_HAS_NO_AUTOFOCUS 1
-#define CAMERA_NEEDS_OVERLAY_FOR_PREVIEW 1 /* don't start preview until preview window is set */
 
 #define MAX_CAMERAS_SUPPORTED 2
 #define GRALLOC_USAGE_PMEM_PRIVATE_ADSP GRALLOC_USAGE_PRIVATE_0
@@ -59,9 +58,6 @@ using android::CameraHardwareInterface;
 
 #ifdef BOARD_USE_FROYO_LIBCAMERA
 extern "C" android::sp<android::CameraHardwareInterface> openCameraHardware(int id);
-#endif
-#ifdef CAMERA_NEEDS_OVERLAY_FOR_PREVIEW
-static int force_start_preview = 0;
 #endif
 static sp<CameraHardwareInterface> gCameraHals[MAX_CAMERAS_SUPPORTED];
 static unsigned int gCamerasOpen = 0;
@@ -554,13 +550,6 @@ int camera_set_preview_window(struct camera_device * device,
 
     gCameraHals[dev->cameraid]->setOverlay(dev->overlay);
 
-#ifdef CAMERA_NEEDS_OVERLAY_FOR_PREVIEW
-    if (force_start_preview) {
-        LOGE("%s---: force starting preview", __FUNCTION__);
-        gCameraHals[dev->cameraid]->startPreview();
-    }
-#endif
-
     LOGI("%s---", __FUNCTION__);
     return 0;
 }
@@ -666,7 +655,6 @@ int camera_start_preview(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
-#ifdef CAMERA_NEEDS_OVERLAY_FOR_PREVIEW
     /* startPreview has been called before setting the preview
      * window. Start the camera with initial buffers because the
      * CameraService expects the preview to be enabled while
@@ -676,13 +664,8 @@ int camera_start_preview(struct camera_device * device)
      * for ICS does.
      */
     if (dev->window == 0) {
-        LOGE("%s---: request starting preview after window is set", __FUNCTION__);
-        force_start_preview = 1;
         return 0;
     }
-
-    force_start_preview = 0;
-#endif
 
     rv = gCameraHals[dev->cameraid]->startPreview();
 
@@ -701,14 +684,10 @@ void camera_stop_preview(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
-#ifdef CAMERA_NEEDS_OVERLAY_FOR_PREVIEW
-    force_start_preview = 0;
-
     /* Don't send the stopPreview to lower layers if previewWindow */
     if (dev->window == 0) {
         return;
     }
-#endif
 
     gCameraHals[dev->cameraid]->stopPreview();
     LOGI("%s---", __FUNCTION__);
@@ -726,12 +705,10 @@ int camera_preview_enabled(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
-#ifdef CAMERA_NEEDS_OVERLAY_FOR_PREVIEW
     /* Not starting preview until window is being set */
     if (dev->window == 0) {
         return 0;
     }
-#endif
 
     rv = gCameraHals[dev->cameraid]->previewEnabled();
 
