@@ -22,7 +22,6 @@
 
 #define NO_SEND_COMMAND   /* do not call libcamera's sendCommand */
 //#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
-#define CAMERA_HAS_NO_AUTOFOCUS 1
 
 #define MAX_CAMERAS_SUPPORTED 2
 #define GRALLOC_USAGE_PMEM_PRIVATE_ADSP GRALLOC_USAGE_PRIVATE_0
@@ -453,13 +452,12 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
                       fps_supported_ranges);
     }
 
-#ifdef CAMERA_HAS_NO_AUTOFOCUS
+    /* Disable auto focus on TouchPad */
     camParams.set(CameraParameters::KEY_SUPPORTED_FOCUS_MODES,
                   CameraParameters::FOCUS_MODE_INFINITY);
 
     camParams.set(CameraParameters::KEY_FOCUS_MODE,
                   CameraParameters::FOCUS_MODE_INFINITY);
-#endif
 
     camParams.set(android::CameraParameters::KEY_MAX_SHARPNESS, "30");
     camParams.set(android::CameraParameters::KEY_MAX_CONTRAST, "10");
@@ -655,18 +653,6 @@ int camera_start_preview(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
-    /* startPreview has been called before setting the preview
-     * window. Start the camera with initial buffers because the
-     * CameraService expects the preview to be enabled while
-     * setting a valid preview window.
-     * As our libcamera does not provide such functionality just
-     * return NO_ERROR here as this is exactly what libcamera2
-     * for ICS does.
-     */
-    if (dev->window == 0) {
-        return 0;
-    }
-
     rv = gCameraHals[dev->cameraid]->startPreview();
 
     LOGI("%s--- rv %d", __FUNCTION__,rv);
@@ -684,11 +670,6 @@ void camera_stop_preview(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
-    /* Don't send the stopPreview to lower layers if previewWindow */
-    if (dev->window == 0) {
-        return;
-    }
-
     gCameraHals[dev->cameraid]->stopPreview();
     LOGI("%s---", __FUNCTION__);
 }
@@ -704,11 +685,6 @@ int camera_preview_enabled(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
-
-    /* Not starting preview until window is being set */
-    if (dev->window == 0) {
-        return 0;
-    }
 
     rv = gCameraHals[dev->cameraid]->previewEnabled();
 
@@ -828,11 +804,9 @@ int camera_auto_focus(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
-#ifdef CAMERA_HAS_NO_AUTOFOCUS
-    rv = 0;
-#else
+
     rv = gCameraHals[dev->cameraid]->autoFocus();
-#endif
+
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
@@ -848,11 +822,9 @@ int camera_cancel_auto_focus(struct camera_device * device)
         return rv;
 
     dev = (priv_camera_device_t*) device;
-#ifdef CAMERA_HAS_NO_AUTOFOCUS
-    rv = 0;
-#else
+
     rv = gCameraHals[dev->cameraid]->cancelAutoFocus();
-#endif
+
     LOGI("%s--- rv %d", __FUNCTION__,rv);
     return rv;
 }
