@@ -404,11 +404,6 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
 
-    if (camParams.get("record-size")) {
-        camParams.set(CameraParameters::KEY_VIDEO_SIZE,
-                      camParams.get("record-size"));
-    }
-
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES)) {
         camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES,
                       preview_sizes);
@@ -482,6 +477,7 @@ int camera_set_preview_window(struct camera_device * device,
 
     if (!window) {
         LOGI("%s---: window is NULL", __FUNCTION__);
+        gCameraHals[dev->cameraid]->setOverlay(NULL);
         return 0;
     }
 
@@ -540,11 +536,12 @@ int camera_set_preview_window(struct camera_device * device,
     dev->preview_width = preview_width;
     dev->preview_height = preview_height;
 
-    dev->overlay =  new Overlay(wrap_set_fd_hook,
-                                wrap_set_crop_hook,
-                                wrap_queue_buffer_hook,
-                                (void *)dev);
-
+    if (dev->overlay == NULL) {
+        dev->overlay =  new Overlay(wrap_set_fd_hook,
+                                    wrap_set_crop_hook,
+                                    wrap_queue_buffer_hook,
+                                    (void *)dev);
+    }
     gCameraHals[dev->cameraid]->setOverlay(dev->overlay);
 
     LOGI("%s---", __FUNCTION__);
