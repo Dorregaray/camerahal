@@ -395,24 +395,12 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
 
 void CameraHAL_FixupParams(android::CameraParameters &camParams)
 {
-    const char *picture_sizes = "1280x1024,1280x768,1280x720,1024x768,800x600,800x480,640x480,352x288,320x240";
     const char *preview_sizes = "640x480,576x432,480x320,384x288,352x288,320x240,240x160,176x144";
     const char *preferred_size = "352x288";
-    const char *preferred_rate = "30";
     const char *fps_supported_ranges = "(15,30)";
 
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
-
-    if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES)) {
-        camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES,
-                      preview_sizes);
-    }
-
-    if (!camParams.get(CameraParameters::KEY_SUPPORTED_PICTURE_SIZES)) {
-        camParams.set(CameraParameters::KEY_SUPPORTED_PICTURE_SIZES,
-                      picture_sizes);
-    }
 
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES)) {
         camParams.set(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES,
@@ -423,22 +411,9 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
         camParams.set(CameraParameters::KEY_VIDEO_SIZE, preferred_size);
     }
 
-    if (!camParams.get(CameraParameters::KEY_PREVIEW_SIZE)) {
-        camParams.set(CameraParameters::KEY_PREVIEW_SIZE, preferred_size);
-    }
-
     if (!camParams.get(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO)) {
         camParams.set(CameraParameters::KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO,
                   preferred_size);
-    }
-
-    if (!camParams.get(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES)) {
-        camParams.set(android::CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES,
-                      preferred_rate);
-    }
-
-    if (!camParams.get(android::CameraParameters::KEY_PREVIEW_FRAME_RATE)) {
-        camParams.set(CameraParameters::KEY_PREVIEW_FRAME_RATE, preferred_rate);
     }
 
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE)) {
