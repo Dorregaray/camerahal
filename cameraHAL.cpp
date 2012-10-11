@@ -20,6 +20,7 @@
 
 #define LOG_TAG "CameraHAL"
 
+#define LOG_NDEBUG 1      /* disable LOGV */
 //#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
 
 #define MAX_CAMERAS_SUPPORTED 2
@@ -143,7 +144,7 @@ static void dump_msg(const char *tag, int msg_type)
 static void wrap_set_fd_hook(void *data, int fd)
 {
     priv_camera_device_t* dev = NULL;
-    //LOGV("%s+++: data %p", __FUNCTION__, data);
+    LOGV("%s+++: data %p", __FUNCTION__, data);
 
     if(!data)
         return;
@@ -156,7 +157,7 @@ static void wrap_set_crop_hook(void *data,
                                uint32_t w, uint32_t h)
 {
     priv_camera_device_t* dev = NULL;
-    //LOGV("%s+++: %p", __FUNCTION__,data);
+    LOGV("%s+++: %p", __FUNCTION__,data);
 
     if(!data)
         return;
@@ -170,7 +171,7 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     sp<IMemoryHeap> heap;
     priv_camera_device_t* dev = NULL;
     preview_stream_ops* window = NULL;
-    //LOGV("%s+++: %p", __FUNCTION__,data);
+    LOGV("%s+++: %p", __FUNCTION__,data);
 
     if(!data)
         return;
@@ -190,8 +191,8 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     int offset = (int)buffer;
     char *frame = (char *)(heap->base()) + offset;
 
-    //LOGV("%s: base:%p offset:%i frame:%p", __FUNCTION__,
-    //     heap->base(), offset, frame);
+    LOGV("%s: base:%p offset:%i frame:%p", __FUNCTION__,
+         heap->base(), offset, frame);
 
     int stride;
     void *vaddr;
@@ -208,7 +209,7 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
                                 0, 0, width, height, &vaddr)) {
         // the code below assumes YUV, not RGB
         memcpy(vaddr, frame, width * height * 3 / 2);
-        //LOGV("%s: copy frame to gralloc buffer", __FUNCTION__);
+        LOGV("%s: copy frame to gralloc buffer", __FUNCTION__);
     } else {
         LOGE("%s: could not lock gralloc buffer", __FUNCTION__);
         goto skipframe;
@@ -246,7 +247,7 @@ skipframe:
     }
     frameCnt++;
 #endif
-    //LOGV("%s---: ", __FUNCTION__);
+    LOGV("%s---: ", __FUNCTION__);
 
     return;
 }
@@ -264,7 +265,7 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     sp<IMemoryHeap> heap;
     camera_memory_t *mem;
 
-    LOGI("%s+++,dev->request_memory %p", __FUNCTION__,dev->request_memory);
+    LOGV("%s+++,dev->request_memory %p", __FUNCTION__,dev->request_memory);
 
     if (!dev->request_memory)
         return NULL;
@@ -272,8 +273,8 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     heap = dataPtr->getMemory(&offset, &size);
     data = (void *)((char *)(heap->base()) + offset);
 
-    LOGI("%s: data: %p size: %i", __FUNCTION__, data, size);
-    LOGI(" offset: %lu", (unsigned long)offset);
+    LOGV("%s: data: %p size: %i", __FUNCTION__, data, size);
+    LOGV(" offset: %lu", (unsigned long)offset);
 
     //#define DUMP_CAPTURE_JPEG
 #ifdef DUMP_CAPTURE_JPEG
@@ -300,11 +301,11 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
 
     mem = dev->request_memory(-1, size, 1, dev->user);
 
-    LOGI(" mem:%p,mem->data%p ",  mem,mem->data);
+    LOGV(" mem:%p,mem->data%p ",  mem,mem->data);
 
     memcpy(mem->data, data, size);
 
-    LOGI("%s---", __FUNCTION__);
+    LOGV("%s---", __FUNCTION__);
     return mem;
 }
 
@@ -313,7 +314,7 @@ static void wrap_notify_callback(int32_t msg_type, int32_t ext1,
 {
     priv_camera_device_t* dev = NULL;
 
-    LOGI("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
+    LOGV("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
     dump_msg(__FUNCTION__, msg_type);
 
     if(!user)
@@ -324,7 +325,7 @@ static void wrap_notify_callback(int32_t msg_type, int32_t ext1,
     if (dev->notify_callback)
         dev->notify_callback(msg_type, ext1, ext2, dev->user);
 
-    LOGI("%s---", __FUNCTION__);
+    LOGV("%s---", __FUNCTION__);
 }
 
 //QiSS ME for capture
@@ -334,7 +335,7 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
     camera_memory_t *data = NULL;
     priv_camera_device_t* dev = NULL;
 
-    LOGI("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
+    LOGV("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
     dump_msg(__FUNCTION__, msg_type);
 
     if(!user)
@@ -357,7 +358,7 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
         data->release(data);
     }
 
-    LOGI("%s---", __FUNCTION__);
+    LOGV("%s---", __FUNCTION__);
 }
 
 //QiSS ME for record
@@ -367,7 +368,7 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
     priv_camera_device_t* dev = NULL;
     camera_memory_t *data = NULL;
 
-    LOGI("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
+    LOGV("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
     dump_msg(__FUNCTION__, msg_type);
 
     if(!user)
@@ -386,7 +387,7 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
         data->release(data);
     }
 
-    LOGI("%s---", __FUNCTION__);
+    LOGV("%s---", __FUNCTION__);
 }
 
 /*******************************************************************
@@ -1021,7 +1022,7 @@ done:
 /* Ugly stuff - ignore SIGFPE */
 void sigfpe_handle(int s)
 {
-    //LOGV("Received SIGFPE. Ignoring\n");
+    LOGV("Received SIGFPE. Ignoring\n");
 }
 
 /* open device handle to one of the cameras
