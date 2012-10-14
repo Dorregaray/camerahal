@@ -20,7 +20,6 @@
 
 #define LOG_TAG "CameraHAL"
 
-#define LOG_NDEBUG 1      /* disable LOGV */
 //#define DUMP_PARAMS 1   /* dump parameteters after get/set operation */
 
 #define MAX_CAMERAS_SUPPORTED 2
@@ -368,7 +367,7 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
     priv_camera_device_t* dev = NULL;
     camera_memory_t *data = NULL;
 
-    LOGV("%s+++: type %i user %p", __FUNCTION__, msg_type,user);
+    LOGV("%s+++: type %i user %p ts %u", __FUNCTION__, msg_type, user, timestamp);
     dump_msg(__FUNCTION__, msg_type);
 
     if(!user)
@@ -722,7 +721,6 @@ int camera_start_recording(struct camera_device * device)
 
     dev = (priv_camera_device_t*) device;
 
-    gCameraHals[dev->cameraid]->enableMsgType(CAMERA_MSG_VIDEO_FRAME);
     rv = gCameraHals[dev->cameraid]->startRecording();
 
     LOGI("%s--- rv %d", __FUNCTION__,rv);
@@ -739,8 +737,6 @@ void camera_stop_recording(struct camera_device * device)
         return;
 
     dev = (priv_camera_device_t*) device;
-
-    gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_VIDEO_FRAME);
 
     gCameraHals[dev->cameraid]->stopRecording();
 
