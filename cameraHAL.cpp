@@ -128,12 +128,14 @@ static struct {
 
 static void dump_msg(const char *tag, int msg_type)
 {
+#if LOG_NDEBUG
     int i;
     for (i = 0; msg_map[i].type; i++) {
         if (msg_type & msg_map[i].type) {
-            LOGI("%s: %s", tag, msg_map[i].text);
+            LOGV("%s: %s", tag, msg_map[i].text);
         }
     }
+#endif
 }
 
 /*******************************************************************
@@ -771,7 +773,7 @@ void camera_release_recording_frame(struct camera_device * device,
     //camera_memory_t *data = (camera_memory_t *)(&opaque);
 
 
-    //LOGI("%s+++: device %p,opaque %p,data %p", __FUNCTION__, device,opaque,data);
+    //LOGV("%s+++: device %p,opaque %p,data %p", __FUNCTION__, device,opaque,data);
 
     if(!device)
         return;
@@ -784,7 +786,7 @@ void camera_release_recording_frame(struct camera_device * device,
      */
     //gCameraHals[dev->cameraid]->releaseRecordingFrame(opaque);
 
-    LOGI("%s---", __FUNCTION__);
+    LOGV("%s---", __FUNCTION__);
 }
 
 int camera_auto_focus(struct camera_device * device)
