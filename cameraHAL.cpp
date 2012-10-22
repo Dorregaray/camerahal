@@ -399,7 +399,7 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
 {
     const char *preview_sizes = "720x480,640x480,576x432,480x320,384x288,352x288,320x240,240x160,176x144";
     const char *preferred_size = "352x288";
-    const char *fps_supported_ranges = "(15,30)";
+    const char *fps_supported_ranges = "(15,31)";
 
     camParams.set(android::CameraParameters::KEY_VIDEO_FRAME_FORMAT,
                   android::CameraParameters::PIXEL_FORMAT_YUV420SP);
@@ -422,15 +422,6 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
                   preferred_size);
     }
 
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-    /* TouchPad's libcamera returns rate 31, while ICS expects 30.
-     * This is informative only (our libcamera does not allow to change
-     * the fps). */
-    camParams.setPreviewFrameRate(30);
-    camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES, "30");
-    camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE,
-                  fps_supported_ranges);
-#endif
     if (!camParams.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE)) {
         camParams.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FPS_RANGE,
                       fps_supported_ranges);
