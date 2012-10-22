@@ -409,10 +409,6 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
                       preview_sizes);
     }
 
-    if (camParams.get("record-size")) {
-        camParams.set(CameraParameters::KEY_VIDEO_SIZE, camParams.get("record-size"));
-    }
-
     if (!camParams.get(CameraParameters::KEY_VIDEO_SIZE)) {
         camParams.set(CameraParameters::KEY_VIDEO_SIZE, preferred_size);
     }
@@ -439,19 +435,6 @@ void CameraHAL_FixupParams(android::CameraParameters &camParams)
     camParams.set(android::CameraParameters::KEY_MAX_SATURATION, "10");
     camParams.set("num-snaps-per-shutter", "1");
 }
-
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-void CameraHAL_ConvertParams(android::CameraParameters &camParams)
-{
-    /* Froyo (and our libcamera) uses record-size parameter for
-     * storying the video recording size while ICS uses video-size.
-     */
-    if (camParams.get(CameraParameters::KEY_VIDEO_SIZE)) {
-        camParams.set("record-size", camParams.get(CameraParameters::KEY_VIDEO_SIZE));
-        camParams.remove(CameraParameters::KEY_VIDEO_SIZE);
-    }
-}
-#endif
 
 int camera_set_preview_window(struct camera_device * device,
                               struct preview_stream_ops *window)
@@ -875,10 +858,6 @@ int camera_set_parameters(struct camera_device * device, const char *params)
 
 #ifdef DUMP_PARAMS
     camParams.dump();
-#endif
-
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-    CameraHAL_ConvertParams(camParams);
 #endif
 
     rv = gCameraHals[dev->cameraid]->setParameters(camParams);
