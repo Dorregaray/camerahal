@@ -30,6 +30,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 
 #include <cutils/log.h>
 #include <ui/OverlayHtc.h>
@@ -860,6 +861,12 @@ int camera_set_parameters(struct camera_device * device, const char *params)
     camParams.dump();
 #endif
 
+    /* Add timestamp */
+    char str[20] = { 0 };
+    const time_t date = time(NULL) + 1;
+    if (strftime(str, sizeof(str), "%Y-%m-%d %H.%M.%S", localtime(&date)) > 0)
+        camParams.set(CameraParameters::KEY_EXIF_DATETIME, str);
+
     rv = gCameraHals[dev->cameraid]->setParameters(camParams);
 
 #ifdef DUMP_PARAMS
@@ -902,6 +909,7 @@ char* camera_get_parameters(struct camera_device * device)
         camParams.set("front-camera-mode", "mirror");
     }
 #endif
+    camParams.set("orientation", "landscape");
 
     params_str8 = camParams.flatten();
     params = (char*) malloc(sizeof(char) * (params_str8.length()+1));
