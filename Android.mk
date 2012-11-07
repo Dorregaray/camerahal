@@ -16,6 +16,9 @@ LOCAL_SHARED_LIBRARIES += libui libhardware libcamera_client
 LOCAL_SHARED_LIBRARIES += libcamera
 LOCAL_PRELINK_MODULE := false
 
+# building for ICS
+LOCAL_CFLAGS += -DANDROID_ICS
+
 ifeq ($(BOARD_HAVE_HTC_FFC), true)
     LOCAL_CFLAGS += -DHTC_FFC
 endif
