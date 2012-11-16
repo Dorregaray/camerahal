@@ -33,7 +33,7 @@
 #include <time.h>
 
 #include <cutils/log.h>
-#include <ui/OverlayHtc.h>
+#include "Overlay.h"
 #include <camera/CameraParameters.h>
 #include <hardware/camera.h>
 #include <binder/IMemory.h>
