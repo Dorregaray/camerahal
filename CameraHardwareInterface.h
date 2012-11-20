@@ -26,6 +26,7 @@
 # define ALOGE LOGE
 # define ALOGD LOGD
 # define ALOGV LOGV
+# define ALOGW LOGW
 #else
 # include <gui/ISurface.h>
 #endif
