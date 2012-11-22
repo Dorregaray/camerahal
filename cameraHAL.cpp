@@ -275,7 +275,7 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     if (dataPtr == NULL)
     {
         ALOGE("%s+++: received null data", __FUNCTION__);
-        return;
+        return NULL;
     }
 
     heap = dataPtr->getMemory(&offset, &size);
