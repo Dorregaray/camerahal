@@ -40,7 +40,7 @@
 #include <media/mediarecorder.h>
 #include <system/camera.h>
 
-#include "linux/msm_mdp.h"
+#include <linux/msm_mdp.h>
 #include <linux/fb.h>
 
 #define LIKELY(exp)   __builtin_expect(!!(exp), 1)

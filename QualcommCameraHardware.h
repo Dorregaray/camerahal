@@ -27,7 +27,7 @@
 
 extern "C" {
 #include <linux/android_pmem.h>
-#include "msm_camera.h"
+#include <media/msm_camera.h>
 #include "QCamera_Intf.h"
 }
 // Extra propriatary stuff (mostly from CM)
