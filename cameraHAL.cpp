@@ -272,6 +272,12 @@ static camera_memory_t *wrap_memory_data(priv_camera_device_t *dev,
     if (!dev->request_memory)
         return NULL;
 
+    if (dataPtr == NULL)
+    {
+        ALOGE("%s+++: received null data", __FUNCTION__);
+        return;
+    }
+
     heap = dataPtr->getMemory(&offset, &size);
     data = (void *)((char *)(heap->base()) + offset);
 
@@ -345,9 +351,15 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
 
     dev = (priv_camera_device_t*) user;
 
-    if(msg_type ==CAMERA_MSG_RAW_IMAGE)
+    if (msg_type == CAMERA_MSG_RAW_IMAGE)
     {
         gCameraHals[dev->cameraid]->disableMsgType(CAMERA_MSG_RAW_IMAGE);
+        return;
+    }
+
+    if (dataPtr == NULL)
+    {
+        ALOGE("%s+++: received null data", __FUNCTION__);
         return;
     }
 
@@ -356,7 +368,7 @@ static void wrap_data_callback(int32_t msg_type, const sp<IMemory>& dataPtr,
     if (dev->data_callback)
         dev->data_callback(msg_type, data, 0, NULL, dev->user);
 
-    if ( NULL != data ) {
+    if (NULL != data ) {
         data->release(data);
     }
 
@@ -373,10 +385,16 @@ static void wrap_data_callback_timestamp(nsecs_t timestamp, int32_t msg_type,
     ALOGV("%s+++: type %i user %p ts %u", __FUNCTION__, msg_type, user, timestamp);
     dump_msg(__FUNCTION__, msg_type);
 
-    if(!user)
+    if (!user)
         return;
 
     dev = (priv_camera_device_t*) user;
+
+    if (dataPtr == NULL)
+    {
+        ALOGE("%s+++: received null data", __FUNCTION__);
+        return;
+    }
 
     data = wrap_memory_data(dev, dataPtr);
 
