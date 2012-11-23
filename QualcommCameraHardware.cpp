@@ -1892,9 +1892,9 @@ static void addExifTag(exif_tag_id_t tagid, exif_tag_type_t type,
 
     int index = exif_table_numEntries;
     exif_data[index].tag_id = tagid;
-	exif_data[index].tag_entry.type = type;
-	exif_data[index].tag_entry.count = count;
-	exif_data[index].tag_entry.copy = copy;
+    exif_data[index].tag_entry.type = type;
+    exif_data[index].tag_entry.count = count;
+    exif_data[index].tag_entry.copy = copy;
     if((type == EXIF_RATIONAL) && (count > 1))
         exif_data[index].tag_entry.data._rats = (rat_t *)data;
     if((type == EXIF_RATIONAL) && (count == 1))
