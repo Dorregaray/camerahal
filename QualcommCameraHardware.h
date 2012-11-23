@@ -557,6 +557,8 @@ private:
     Mutex mPmemWaitLock;
     Condition mPmemWait;
     bool mPrevHeapDeallocRunning;
+    bool mSnapshotCancel;
+    Mutex mSnapshotCancelLock;
 };
 
 }; // namespace android

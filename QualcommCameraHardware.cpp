@@ -1111,7 +1111,8 @@ QualcommCameraHardware::QualcommCameraHardware()
       mThumbnailWidth(0),
       mThumbnailHeight(0),
       strTexturesOn(false),
-      mPrevHeapDeallocRunning(false)
+      mPrevHeapDeallocRunning(false),
+      mSnapshotCancel(false)
 {
     ALOGI("QualcommCameraHardware constructor E");
     mMMCameraDLRef = MMCameraDL::getInstance();
@@ -3356,6 +3357,24 @@ void QualcommCameraHardware::runSnapshotThread(void *data)
         ALOGE("FATAL ERROR: could not dlopen liboemcamera.so: %s", dlerror());
     }
 
+    mSnapshotCancelLock.lock();
+    if(mSnapshotCancel == true) {
+        mSnapshotCancel = false;
+        mSnapshotCancelLock.unlock();
+        LOGI("%s: cancelpicture has been called..so abort taking snapshot", __FUNCTION__);
+        deinitRaw();
+        mInSnapshotModeWaitLock.lock();
+        mInSnapshotMode = false;
+        mInSnapshotModeWait.signal();
+        mInSnapshotModeWaitLock.unlock();
+        mSnapshotThreadWaitLock.lock();
+        mSnapshotThreadRunning = false;
+        mSnapshotThreadWait.signal();
+        mSnapshotThreadWaitLock.unlock();
+        return;
+    }
+    mSnapshotCancelLock.unlock();
+
     if(mSnapshotFormat == PICTURE_FORMAT_JPEG){
         if (native_start_ops(CAMERA_OPS_SNAPSHOT, NULL))
             ret = receiveRawPicture();
@@ -3489,6 +3508,10 @@ status_t QualcommCameraHardware::takePicture()
     mShutterPending = true;
     mShutterLock.unlock();
 
+    mSnapshotCancelLock.lock();
+    mSnapshotCancel = false;
+    mSnapshotCancelLock.unlock();
+
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
@@ -3595,6 +3618,12 @@ status_t QualcommCameraHardware::cancelPicture()
 {
     status_t rc;
     ALOGV("cancelPicture: E");
+
+    mSnapshotCancelLock.lock();
+    LOGI("%s: setting mSnapshotCancel to true", __FUNCTION__);
+    mSnapshotCancel = true;
+    mSnapshotCancelLock.unlock();
+
     if (mCurrentTarget == TARGET_MSM7627) {
         mSnapshotDone = TRUE;
         mSnapshotThreadWaitLock.lock();
