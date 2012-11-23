@@ -90,6 +90,7 @@ extern "C" {
 #if DLOPEN_LIBMMCAMERA
 #include <dlfcn.h>
 
+void *libmmcamera;
 void* (*LINK_cam_conf)(void *data);
 void* (*LINK_cam_frame)(void *data);
 bool  (*LINK_jpeg_encoder_init)();
@@ -317,6 +318,7 @@ static bool mVpeEnabled;
 static int HAL_numOfCameras = 0;
 static camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 static int HAL_currentCameraId = 0;
+static mm_camera_config mCfgControl;
 
 namespace android {
 
@@ -1029,6 +1031,39 @@ void QualcommCameraHardware::storeTargetType(void) {
     return;
 }
 
+void *openCamera(void *data) {
+    ALOGV(" openCamera : E");
+    int ret_val = TRUE;
+
+    if (!libmmcamera) {
+        LOGE("FATAL ERROR: could not dlopen liboemcamera.so: %s", dlerror());
+        ret_val = FALSE;
+        pthread_exit((void*) ret_val);
+    }
+
+    *(void **)&LINK_mm_camera_init =
+        ::dlsym(libmmcamera, "mm_camera_init");
+
+    *(void **)&LINK_mm_camera_exec =
+        ::dlsym(libmmcamera, "mm_camera_exec");
+
+    // Hard coding it to 0 for MSM_CAMERA. Will change with 3D camera support
+    if (MM_CAMERA_SUCCESS != LINK_mm_camera_init(&mCfgControl, &mCamNotify, &mCamOps, 0)) {
+        ALOGE("startCamera: mm_camera_init failed:");
+        ret_val = FALSE;
+        pthread_exit((void*) ret_val);
+    }
+
+    if (MM_CAMERA_SUCCESS != LINK_mm_camera_exec()) {
+        ALOGE("startCamera: mm_camera_exec failed:");
+        ret_val = FALSE;
+        pthread_exit((void*) ret_val);
+    }
+    ALOGV(" openCamera : X");
+    pthread_exit((void*) ret_val);
+
+    return NULL;
+}
 //-------------------------------------------------------------------------------------
 static Mutex singleton_lock;
 static bool singleton_releasing;
@@ -1121,6 +1156,10 @@ QualcommCameraHardware::QualcommCameraHardware()
     char value[PROPERTY_VALUE_MAX];
 
     storeTargetType();
+
+    if( (pthread_create(&mDeviceOpenThread, NULL, openCamera, NULL)) != 0) {
+        LOGE(" openCamera thread creation failed ");
+    }
 
     memset(&mDimension, 0, sizeof(mDimension));
     memset(&mCrop, 0, sizeof(mCrop));
@@ -1688,8 +1727,6 @@ bool QualcommCameraHardware::startCamera()
 
     *(void **)&LINK_release_cam_conf_thread =
         ::dlsym(libmmcamera, "release_cam_conf_thread");
-    *(void **)&LINK_mm_camera_init =
-        ::dlsym(libmmcamera, "mm_camera_init");
 
     mCamNotify.on_liveshot_event = &receive_liveshot_callback;
 
@@ -1704,9 +1741,6 @@ bool QualcommCameraHardware::startCamera()
 
     *(void **)&LINK_mm_camera_destroy =
         ::dlsym(libmmcamera, "mm_camera_destroy");
-
-    *(void **)&LINK_mm_camera_exec =
-        ::dlsym(libmmcamera, "mm_camera_exec");
 
 /* Disabling until support is available.
     *(void **)&LINK_zoom_crop_upscale =
@@ -1726,17 +1760,6 @@ bool QualcommCameraHardware::startCamera()
 
     /* The control thread is in libcamera itself. */
 
-    // Hard coding it to 0 for MSM_CAMERA. Will change with 3D camera support
-    if (MM_CAMERA_SUCCESS != LINK_mm_camera_init(&mCfgControl, &mCamNotify, &mCamOps, 0)) {
-            ALOGE("startCamera: mm_camera_init failed:");
-            return FALSE;
-    }
-
-    if (MM_CAMERA_SUCCESS != LINK_mm_camera_exec()) {
-            ALOGE("startCamera: mm_camera_exec failed:");
-            return FALSE;
-    }
-
     if((mCurrentTarget != TARGET_MSM7630) && (mCurrentTarget != TARGET_MSM8660)){
         fb_fd = open("/dev/graphics/fb0", O_RDWR);
         if (fb_fd < 0) {
@@ -1745,9 +1768,16 @@ bool QualcommCameraHardware::startCamera()
         }
     }
 
-    /* This will block until the control thread is launched. After that, sensor
-     * information becomes available.
-     */
+    int ret_val;
+    if (pthread_join(mDeviceOpenThread, (void**)&ret_val) != 0) {
+         LOGE("openCamera thread exit failed");
+         return false;
+    }
+
+    if (!ret_val) {
+        LOGE("openCamera() failed");
+        return false;
+    }
 
     mCfgControl.mm_camera_query_parms(CAMERA_PARM_PICT_SIZE, (void **)&picture_sizes, &PICTURE_SIZE_COUNT);
     if ((picture_sizes == NULL) || (!PICTURE_SIZE_COUNT)) {

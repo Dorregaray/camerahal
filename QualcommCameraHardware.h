@@ -392,6 +392,8 @@ private:
     friend void *video_thread(void *user);
     void runVideoThread(void *data);
 
+    friend void *openCamera(void *data);
+
     // For Histogram
     int mStatsOn;
     int mCurrent;
@@ -503,9 +505,6 @@ private:
     int                 mJpegMaxSize;
     int32_t             mStatSize;
 
-#if DLOPEN_LIBMMCAMERA
-    void *libmmcamera;
-#endif
 
     cam_ctrl_dimension_t mDimension;
     bool mAutoFocusThreadRunning;
@@ -516,6 +515,7 @@ private:
     pthread_t mFrameThread;
     pthread_t mVideoThread;
     pthread_t mSnapshotThread;
+    pthread_t mDeviceOpenThread;
 
     common_crop_t mCrop;
 
@@ -544,7 +544,6 @@ private:
     int maxSnapshotWidth;
     int maxSnapshotHeight;
     bool mHasAutoFocusSupport;
-    mm_camera_config mCfgControl;
     int videoWidth, videoHeight;
 
     bool mDisEnabled;
