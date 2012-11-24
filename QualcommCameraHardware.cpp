@@ -2965,16 +2965,15 @@ void QualcommCameraHardware::release()
     ALOGI("release X: mCameraRunning = %d, mFrameThreadRunning = %d", mCameraRunning, mFrameThreadRunning);
     ALOGI("mVideoThreadRunning = %d, mSnapshotThreadRunning = %d, mJpegThreadRunning = %d", mVideoThreadRunning, mSnapshotThreadRunning, mJpegThreadRunning);
     ALOGI("camframe_timeout_flag = %d, mAutoFocusThreadRunning = %d", camframe_timeout_flag, mAutoFocusThreadRunning);
-
-    LINK_mm_camera_destroy();
-
-    libmmcamera = NULL;
-    mMMCameraDLRef.clear();
 }
 
 QualcommCameraHardware::~QualcommCameraHardware()
 {
     ALOGI("~QualcommCameraHardware E");
+    LINK_mm_camera_destroy();
+
+    libmmcamera = NULL;
+    mMMCameraDLRef.clear();
 
     singleton_lock.lock();
 
