@@ -15,8 +15,8 @@
 ** limitations under the License.
 */
 
-#define LOG_NDEBUG 0
-#define LOG_NIDEBUG 0
+//#define LOG_NDEBUG 0
+//#define LOG_NIDEBUG 0
 #define LOG_TAG "QualcommCameraHardware"
 #include <utils/Log.h>
 
