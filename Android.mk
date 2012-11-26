@@ -22,9 +22,9 @@ ifeq ($(BOARD_FIRST_CAMERA_FRONT_FACING),true)
     LOCAL_CFLAGS += -DFIRST_CAMERA_FACING=CAMERA_FACING_FRONT -DFIRST_CAMERA_ORIENTATION=90
 endif
 
-#ifeq ($(BOARD_DEBUG_MEMLEAKS),true)
+ifeq ($(BOARD_DEBUG_MEMLEAKS),true)
     LOCAL_CFLAGS += -DHEAPTRACKER
-#endif
+endif
 
 LOCAL_C_INCLUDES := $(TOP)/frameworks/base/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-camera
@@ -33,8 +33,8 @@ LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-still/jpeg
 LOCAL_SHARED_LIBRARIES := libutils libui libcamera_client liblog libcutils
 LOCAL_SHARED_LIBRARIES += libbinder libdl libhardware
 
-#ifeq ($(BOARD_DEBUG_MEMLEAKS),true)
+ifeq ($(BOARD_DEBUG_MEMLEAKS),true)
     LOCAL_SHARED_LIBRARIES += libheaptracker
-#endif
+endif
 
 include $(BUILD_SHARED_LIBRARY)
