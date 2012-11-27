@@ -961,7 +961,7 @@ void *openCamera(void *data) {
     int ret_val = TRUE;
 
     if (!libmmcamera) {
-        LOGE("FATAL ERROR: could not dlopen liboemcamera.so: %s", dlerror());
+        ALOGE("FATAL ERROR: could not dlopen liboemcamera.so: %s", dlerror());
         ret_val = FALSE;
         pthread_exit((void*) ret_val);
     }
@@ -972,16 +972,12 @@ void *openCamera(void *data) {
     *(void **)&LINK_mm_camera_exec =
         ::dlsym(libmmcamera, "mm_camera_exec");
 
-    ALOGV("openCamera: initializing camera");
-
     // Hard coding it to 0 for MSM_CAMERA. Will change with 3D camera support
     if (MM_CAMERA_SUCCESS != LINK_mm_camera_init(&mCfgControl, &mCamNotify, &mCamOps, 0)) {
         ALOGE("startCamera: mm_camera_init failed");
         ret_val = FALSE;
         pthread_exit((void*) ret_val);
     }
-
-    ALOGV("openCamera: starting camera");
 
     if (MM_CAMERA_SUCCESS != LINK_mm_camera_exec()) {
         ALOGE("startCamera: mm_camera_exec failed:");
@@ -1088,7 +1084,7 @@ QualcommCameraHardware::QualcommCameraHardware()
     storeTargetType();
 
     if( (pthread_create(&mDeviceOpenThread, NULL, openCamera, NULL)) != 0) {
-        LOGE(" openCamera thread creation failed ");
+        ALOGE(" openCamera thread creation failed ");
     }
 
     memset(&mDimension, 0, sizeof(mDimension));
@@ -1708,12 +1704,12 @@ bool QualcommCameraHardware::startCamera()
 
     int ret_val;
     if (pthread_join(mDeviceOpenThread, (void**)&ret_val) != 0) {
-         LOGE("openCamera thread exit failed");
+         ALOGE("openCamera thread exit failed");
          return false;
     }
 
     if (!ret_val) {
-        LOGE("openCamera() failed");
+        ALOGE("openCamera() failed");
         return false;
     }
 
@@ -3378,7 +3374,7 @@ void QualcommCameraHardware::runSnapshotThread(void *data)
     if(mSnapshotCancel == true) {
         mSnapshotCancel = false;
         mSnapshotCancelLock.unlock();
-        LOGI("%s: cancelpicture has been called..so abort taking snapshot", __FUNCTION__);
+        ALOGV("%s: cancelpicture has been called..so abort taking snapshot", __FUNCTION__);
         deinitRaw();
         mInSnapshotModeWaitLock.lock();
         mInSnapshotMode = false;
@@ -3639,8 +3635,8 @@ status_t QualcommCameraHardware::cancelPicture()
     status_t rc;
     ALOGV("cancelPicture: E");
 
+    ALOGV("%s: setting mSnapshotCancel to true", __FUNCTION__);
     mSnapshotCancelLock.lock();
-    LOGI("%s: setting mSnapshotCancel to true", __FUNCTION__);
     mSnapshotCancel = true;
     mSnapshotCancelLock.unlock();
 
