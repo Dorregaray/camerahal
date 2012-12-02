@@ -5127,6 +5127,20 @@ status_t QualcommCameraHardware::setRecordSize(const CameraParameters& params)
                 previewHeight = videoHeight;
                 mParameters.setPreviewSize(previewWidth, previewHeight);
             }
+
+            //Validate record size
+            int isValid = 0;
+            for (size_t i = 0; i <  PREVIEW_SIZE_COUNT; ++i) {
+                if (videoWidth == preview_sizes[i].width
+                   && videoHeight == preview_sizes[i].height) {
+                    isValid = 1;
+                }
+            }
+            if (!isValid) {
+                videoWidth = DEFAULT_VIDEO_WIDTH;
+                videoHeight = DEFAULT_VIDEO_HEIGHT;
+            }
+
             if( (mCurrentTarget != TARGET_MSM7630)
                 && (mCurrentTarget != TARGET_QSD8250)
                  && (mCurrentTarget != TARGET_MSM8660) ) {
@@ -5169,6 +5183,7 @@ status_t QualcommCameraHardware::setPreviewSize(const CameraParameters& params)
         }
     }
     ALOGE("Invalid preview size requested: %dx%d", width, height);
+    mParameters.setPreviewSize(previewWidth, previewHeight);
     return BAD_VALUE;
 }
 status_t QualcommCameraHardware::setPreviewFpsRange(const CameraParameters& params)
