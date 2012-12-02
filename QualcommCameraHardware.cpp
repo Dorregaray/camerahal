@@ -6696,6 +6696,9 @@ extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
 
     property_get("ro.board.platform",mDeviceName," ");
 
+    /* Update camera info if needed */
+    if (HAL_numOfCameras < 1) HAL_getNumberOfCameras();
+
     for(i = 0; i < HAL_numOfCameras; i++) {
         if(i == cameraId) {
             ALOGI("Found a matching camera info for ID %d", cameraId);
@@ -6731,6 +6734,10 @@ extern "C" sp<CameraHardwareInterface> HAL_openCameraHardware(int cameraId)
 {
     int i;
     ALOGI("openCameraHardware: call createInstance");
+
+    /* Update camera info if needed */
+    if (HAL_numOfCameras < 1) HAL_getNumberOfCameras();
+
     for(i = 0; i < HAL_numOfCameras; i++) {
         if(i == cameraId) {
             ALOGI("openCameraHardware:Valid camera ID %d", cameraId);
