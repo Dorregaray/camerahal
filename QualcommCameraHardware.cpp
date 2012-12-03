@@ -1217,23 +1217,23 @@ void QualcommCameraHardware::initDefaultParameters()
     ALOGI("initDefaultParameters E");
 
     /* Set the default dimensions */
-	mDimension.picture_width = DEFAULT_PICTURE_WIDTH;
-	mDimension.picture_height = DEFAULT_PICTURE_HEIGHT;
+    mDimension.picture_width = DEFAULT_PICTURE_WIDTH;
+    mDimension.picture_height = DEFAULT_PICTURE_HEIGHT;
     mDimension.ui_thumbnail_width =
         thumbnail_sizes[DEFAULT_THUMBNAIL_SETTING].width;
     mDimension.ui_thumbnail_height =
         thumbnail_sizes[DEFAULT_THUMBNAIL_SETTING].height;
 
-	/* Update dimensions. Otherwise CAMERA_PARM_ZOOM_RATIO will fail */
+    /* Update dimensions. Otherwise CAMERA_PARM_ZOOM_RATIO will fail */
     bool ret = native_set_parms(CAMERA_PARM_DIMENSION,
                                sizeof(cam_ctrl_dimension_t), &mDimension);
 
     hasAutoFocusSupport();
     //Disable DIS for Web Camera
-    if( !mCfgControl.mm_camera_is_supported(CAMERA_PARM_VIDEO_DIS)){
+    if (!mCfgControl.mm_camera_is_supported(CAMERA_PARM_VIDEO_DIS)) {
         ALOGV("DISABLE DIS");
         mDisEnabled = 0;
-    }else {
+    } else {
         ALOGV("Enable DIS");
     }
     // Initialize constant parameter strings. This will happen only once in the
@@ -1297,7 +1297,7 @@ void QualcommCameraHardware::initDefaultParameters()
                 continuous_af, sizeof(continuous_af) / sizeof(str_map));
         }
 
-        if( mCfgControl.mm_camera_query_parms(CAMERA_PARM_ZOOM_RATIO, (void **)&zoomRatios, (uint32_t *) &mMaxZoom) == MM_CAMERA_SUCCESS)
+        if (mCfgControl.mm_camera_query_parms(CAMERA_PARM_ZOOM_RATIO, (void **)&zoomRatios, (uint32_t *) &mMaxZoom) == MM_CAMERA_SUCCESS)
         {
             zoomSupported = true;
             if( mMaxZoom >0) {
@@ -1430,8 +1430,8 @@ void QualcommCameraHardware::initDefaultParameters()
     mParameters.set(CameraParameters::KEY_SUPPORTED_PREVIEW_SIZES,
                     preview_size_values.string());
 
-    //mParameters.set(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES,
-    //                preview_size_values.string());
+    mParameters.set(CameraParameters::KEY_SUPPORTED_VIDEO_SIZES,
+                    preview_size_values.string());
 
     mParameters.set(CameraParameters::KEY_SUPPORTED_PICTURE_SIZES,
                     picture_size_values.string());
