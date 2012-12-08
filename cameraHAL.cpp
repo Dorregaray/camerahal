@@ -212,8 +212,58 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
     if (0 == dev->gralloc->lock(dev->gralloc, *buf_handle,
                                 GRALLOC_USAGE_SW_WRITE_MASK,
                                 0, 0, width, height, &vaddr)) {
-        // the code below assumes YUV, not RGB
+
+        /* Our cam sensor is configured in normal (not mirror mode)
+         * but the Android expects the front cameras to be working
+         * in mirror mode, so in result we have a preview rotated
+         * by 180 degrees. For some reason this issue not appears
+         * in ICS so we put the frame as it is there.
+         * On JB we're flipping the frame horizontally to compensate
+         * the 180 degree rotation. To flip horizontally the YUV420SP
+         * frame we are simply reverting the order of data in the rows.
+         */
+#ifdef ANDROID_ICS
         memcpy(vaddr, frame, width * height * 3 / 2);
+#else
+        /*
+         * The YUV420 Semi-Planar frame is constructed as follows:
+         *
+         * - the Y values are stored in one plane:
+         * |-------------------------------|   _
+         * | Y0 | Y1 | Y2 | Y3 | ...       |   |
+         * | ...                           | height
+         * |                               |   |
+         * |-------------------------------|   -
+         * <------------ width ------------>
+         *
+         * - the U and V values (sub-sampled by 2) are stored in another plane:
+         * |-------------------------------|   _
+         * | U0 | V0 | U2 | V2 | ....      |   |
+         * | ...                           | height/2
+         * |                               |   |
+         * |-------------------------------|   -
+         * <------------ width ------------>
+         */
+
+        uint8_t *buff = (uint8_t *)vaddr;
+        int pos = 0;
+
+        //swap Y plane
+        for (int y = 0; y < height; ++y)
+        {
+            pos = y * width;
+            for (int x = 0; x < width; ++x)
+                buff[pos + x] = frame[pos + width - x];
+        }
+
+        //swap UV plane
+        for (int y = 0; y < height/2; ++y)
+        {
+            pos += width;
+            for (int x = 0; x < width; ++x)
+                buff[pos + x] = frame[pos + width - x];
+        }
+#endif
         ALOGV("%s: copy frame to gralloc buffer", __FUNCTION__);
     } else {
         ALOGE("%s: could not lock gralloc buffer", __FUNCTION__);
