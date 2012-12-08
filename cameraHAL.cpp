@@ -218,9 +218,11 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
          * in mirror mode, so in result we have a preview rotated
          * by 180 degrees. For some reason this issue not appears
          * in ICS so we put the frame as it is there.
-         * On JB we're flipping the frame horizontally to compensate
-         * the 180 degree rotation. To flip horizontally the YUV420SP
-         * frame we are simply reverting the order of data in the rows.
+         * On JB we're flipping the frame horizontally and vertically
+         * to compensate this rotation.
+         * To flip horizontally the YUV420SP frame we are reverting
+         * the order of data in the rows (horizontally) and the order
+         * of rows (vertically).
          */
 #ifdef ANDROID_ICS
         memcpy(vaddr, frame, width * height * 3 / 2);
@@ -246,22 +248,25 @@ static void wrap_queue_buffer_hook(void *data, void* buffer)
          */
 
         uint8_t *buff = (uint8_t *)vaddr;
-        int pos = 0;
+        int pos_in = 0, pos_out = 0;
 
         //swap Y plane
         for (int y = 0; y < height; ++y)
         {
-            pos = y * width;
+            pos_in = y * width;
+            pos_out = (height - y) * width;
             for (int x = 0; x < width; ++x)
-                buff[pos + x] = frame[pos + width - x];
+                buff[pos_in + x] = frame[pos_out + width - x];
         }
 
         //swap UV plane
+        pos_out = pos_in + width + width * height/2;
         for (int y = 0; y < height/2; ++y)
         {
-            pos += width;
+            pos_in += width;
+            pos_out -= width;
             for (int x = 0; x < width; ++x)
-                buff[pos + x] = frame[pos + width - x];
+                buff[pos_in + x] = frame[pos_out + width - x];
         }
 #endif
         ALOGV("%s: copy frame to gralloc buffer", __FUNCTION__);
