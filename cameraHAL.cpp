@@ -48,16 +48,11 @@ using android::IMemoryHeap;
 using android::CameraParameters;
 
 using android::CameraInfo;
-#ifndef BOARD_USE_FROYO_LIBCAMERA
 using android::HAL_getCameraInfo;
 using android::HAL_getNumberOfCameras;
 using android::HAL_openCameraHardware;
-#endif
 using android::CameraHardwareInterface;
 
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-extern "C" android::sp<android::CameraHardwareInterface> openCameraHardware(int id);
-#endif
 static sp<CameraHardwareInterface> gCameraHals[MAX_CAMERAS_SUPPORTED];
 static unsigned int gCamerasOpen = 0;
 //static android::Mutex gCameraDeviceLock;
@@ -909,18 +904,6 @@ char* camera_get_parameters(struct camera_device * device)
 
     CameraHAL_FixupParams(camParams);
 
-#ifdef HTC_FFC
-    if (dev->cameraid == 1) {
-#ifdef REVERSE_FFC
-        /* Change default parameters for the front camera */
-        camParams.set("front-camera-mode", "reverse"); // default is "mirror"
-#endif
-    } else {
-        camParams.set("front-camera-mode", "mirror");
-    }
-#endif
-    camParams.set("orientation", "landscape");
-
     params_str8 = camParams.flatten();
     params = (char*) malloc(sizeof(char) * (params_str8.length()+1));
     strcpy(params, params_str8.string());
@@ -1101,21 +1084,6 @@ int camera_device_open(const hw_module_t* module, const char* name,
             goto fail;
         }
 
-#ifdef HTC_FFC
-#define HTC_SWITCH_CAMERA_FILE_PATH "/sys/android_camera2/htcwc"
-
-        char htc_buffer[16];
-        int htc_fd;
-
-        if (access(HTC_SWITCH_CAMERA_FILE_PATH, W_OK) == 0) {
-            ALOGI("Switching to HTC Camera: %d", cameraid);
-            snprintf(htc_buffer, sizeof(htc_buffer), "%d", cameraid);
-            htc_fd = open(HTC_SWITCH_CAMERA_FILE_PATH, O_WRONLY);
-            write(htc_fd, htc_buffer, strlen(htc_buffer));
-            close(htc_fd);
-        }
-#endif
-
         memset(priv_camera_device, 0, sizeof(*priv_camera_device));
         memset(camera_ops, 0, sizeof(*camera_ops));
 
@@ -1155,11 +1123,7 @@ int camera_device_open(const hw_module_t* module, const char* name,
 
         priv_camera_device->cameraid = cameraid;
 
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-        camera = openCameraHardware(cameraid);
-#else
         camera = HAL_openCameraHardware(cameraid);
-#endif
         if(camera == NULL)
         {
             ALOGE("Couldn't create instance of CameraHal class");
@@ -1191,58 +1155,20 @@ fail:
 
 int camera_get_number_of_cameras(void)
 {
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-    int num_cameras = 1; //FIXME
-#ifdef HTC_FFC
-    if (access(HTC_SWITCH_CAMERA_FILE_PATH, W_OK) == 0) {
-        num_cameras = 2;
-    }
-#endif
-#else
     int num_cameras = HAL_getNumberOfCameras();
-#endif
     ALOGI("%s: number:%i", __FUNCTION__, num_cameras);
-
     return num_cameras;
 }
-
-#if defined(BOARD_USE_FROYO_LIBCAMERA)
-#ifndef FIRST_CAMERA_FACING
-#define FIRST_CAMERA_FACING CAMERA_FACING_BACK
-#endif
-#ifndef FIRST_CAMERA_ORIENTATION
-#define FIRST_CAMERA_ORIENTATION 90
-#endif
-static const CameraInfo sCameraInfo[] = {
-    {
-        FIRST_CAMERA_FACING,
-        FIRST_CAMERA_ORIENTATION,  /* orientation */
-        1, /* CAMERA_MODE_2D */
-    },
-    {
-        CAMERA_FACING_FRONT,
-        270, /* orientation */
-        1, /* CAMERA_MODE_2D */
-    }
-};
-#endif
 
 int camera_get_camera_info(int camera_id, struct camera_info *info)
 {
     int rv = 0;
-
     CameraInfo cameraInfo;
 
-#ifdef BOARD_USE_FROYO_LIBCAMERA
-    memcpy(info, &sCameraInfo[camera_id], sizeof(struct camera_info));
-#else
     android::HAL_getCameraInfo(camera_id, &cameraInfo);
-
     info->facing = cameraInfo.facing;
     info->orientation = cameraInfo.orientation;
-#endif
 
     ALOGI("%s: id:%i faceing:%i orientation: %i", __FUNCTION__,camera_id, info->facing, info->orientation);
-
     return rv;
 }
