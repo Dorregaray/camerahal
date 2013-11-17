@@ -1865,9 +1865,9 @@ static void setLatLon(exif_tag_id_t tag, const char *latlonString) {
 
     parseLatLong(latlonString, &degrees, &minutes, &seconds);
 
-    rat_t value[3] = { {degrees, 1},
-                       {minutes, 1},
-                       {seconds, 1000} };
+    rat_t value[3] = { {(unsigned)degrees, 1},
+                       {(unsigned)minutes, 1},
+                       {(unsigned)seconds, 1000} };
 
     if(tag == EXIFTAGID_GPS_LATITUDE) {
         memcpy(latitude, value, sizeof(latitude));
@@ -1966,9 +1966,9 @@ void QualcommCameraHardware::setGpsParameters() {
       addExifTag(EXIFTAGID_GPS_DATESTAMP, EXIF_ASCII,
                           strlen(gpsDatestamp)+1 , 1, (void *)&gpsDatestamp);
 
-      rat_t time_value[3] = { {UTCTimestamp->tm_hour, 1},
-                              {UTCTimestamp->tm_min, 1},
-                              {UTCTimestamp->tm_sec, 1} };
+      rat_t time_value[3] = { {(unsigned)UTCTimestamp->tm_hour, 1},
+                              {(unsigned)UTCTimestamp->tm_min, 1},
+                              {(unsigned)UTCTimestamp->tm_sec, 1} };
 
 
       memcpy(&gpsTimestamp, &time_value, sizeof(gpsTimestamp));
@@ -2031,7 +2031,7 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
                   20, 1, (void *)dateTime);
     }
 
-    int focalLengthValue = (int) (mParameters.getFloat(
+    unsigned focalLengthValue = (unsigned) (mParameters.getFloat(
                 CameraParameters::KEY_FOCAL_LENGTH) * FOCAL_LENGTH_DECIMAL_PRECISON);
     rat_t focalLengthRational = {focalLengthValue, FOCAL_LENGTH_DECIMAL_PRECISON};
     memcpy(&focalLength, &focalLengthRational, sizeof(focalLengthRational));
@@ -6727,6 +6727,7 @@ extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
                 cameraInfo->orientation = ((APP_ORIENTATION - HAL_cameraInfo[i].sensor_mount_angle) + 360)%360;
 
             ALOGI("%s: orientation = %d", __FUNCTION__, cameraInfo->orientation);
+#if 0
             cameraInfo->mode = 0;
             if(HAL_cameraInfo[i].modes_supported & CAMERA_MODE_2D)
                 cameraInfo->mode |= CAMERA_SUPPORT_MODE_2D;
@@ -6734,6 +6735,7 @@ extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo)
                 cameraInfo->mode |= CAMERA_SUPPORT_MODE_3D;
 
             ALOGI("%s: modes supported = %d", __FUNCTION__, cameraInfo->mode);
+#endif
             return;
         }
     }
