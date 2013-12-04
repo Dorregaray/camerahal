@@ -381,7 +381,7 @@ private:
     sp<AshmemPool> mStatHeap;
     sp<AshmemPool> mMetaDataHeap;
     sp<IonPool> mRawSnapShotPmemHeap;
-    sp<IonPool> mPostviewHeap;
+    sp<IonPool> mPostViewHeap;
 #else
     sp<PmemPool> mPreviewHeap;
     sp<PmemPool> mRecordHeap;
