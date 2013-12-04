@@ -63,7 +63,7 @@ typedef struct {
 } video_dis_param_ctrl_t;
 
 typedef uint32_t jpeg_event_t;
-
+#if 0
 typedef enum {
 	CAMERA_WB_MIN_MINUS_1,
 	CAMERA_WB_AUTO = 1,  /* This list must match aeecamera.h */
@@ -76,7 +76,7 @@ typedef enum {
 	CAMERA_WB_SHADE,
 	CAMERA_WB_MAX_PLUS_1
 } camera_wb_type;
-
+#endif
 typedef enum {
     CAMERA_BESTSHOT_OFF,
     CAMERA_BESTSHOT_ACTION,
