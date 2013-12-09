@@ -2370,11 +2370,13 @@ void QualcommCameraHardware::runFrameThread(void *data)
 
     if((mCurrentTarget == TARGET_MSM7630) || (mCurrentTarget == TARGET_QSD8250) || (mCurrentTarget == TARGET_MSM8660)) {
         ALOGV("runFrameThread: clearing mRecordHeap");
+#if 0
         mRecordHeap.clear();
         mRecordHeap = NULL;
-
+#endif
         int CbCrOffset = PAD_TO_2K(mDimension.video_width  * mDimension.video_height);
         for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
+#if 0
             if (mRecordfd[cnt] > 0) {
                 ALOGE("Unregistering buffer %d with kernel",cnt);
                 register_buf(mRecordFrameSize,
@@ -2385,6 +2387,23 @@ void QualcommCameraHardware::runFrameThread(void *data)
                             MSM_PMEM_VIDEO,
                             false, false);
                 ALOGE("Came back from register call to kernel");
+            }
+#endif
+            type = MSM_PMEM_VIDEO;
+            if((mVpeEnabled) && (cnt == kRecordBufferCount-1)) {
+                type = MSM_PMEM_VIDEO_VPE;
+            }
+            if(recordframes) {
+                register_buf(mRecordFrameSize,
+                    mRecordFrameSize, CbCrOffset, 0,
+                    recordframes[cnt].fd,
+                    0,
+                    (uint8_t *)recordframes[cnt].buffer,
+                    type,
+                    false,false);
+                if(mRecordMapped[cnt]) {
+                    mRecordMapped[cnt]->release(mRecordMapped[cnt]);
+                }
             }
         }
     }
@@ -3259,12 +3278,12 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
         CbCrOffsetThumb = PAD_TO_4K(CEILING32(mDimension.ui_thumbnail_width) *
                               CEILING32(mDimension.ui_thumbnail_height));
     }
-
+#if 0
     if (mJpegHeap != NULL) {
         ALOGV("initRaw: clearing old mJpegHeap.");
         mJpegHeap.clear();
     }
-
+#endif
     // Snapshot
     mRawSize = rawWidth * rawHeight * 3 / 2;
     mCbCrOffsetRaw = PAD_TO_WORD(rawWidth * rawHeight);
@@ -3396,6 +3415,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     mPmemWaitLock.unlock();
 #endif
     //Main Raw Image
+#if 0
 #ifdef USE_ION
     mRawHeap =
         new IonPool(ion_heap,
@@ -3426,7 +3446,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
        ALOGE("initRaw X: error initializing mRawHeap");
        return false;
     }
-
+#endif
     //This is kind of workaround for the GPU limitation, as it can't
     //output in line to correct NV21 adreno formula for some snapshot
     //sizes (like 3264x2448). This change of cbcr offset will ensure that
@@ -3478,6 +3498,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     if (mThumbnailHeap != NULL)
         mThumbnailHeap.clear();
 #endif
+#if 0
 #ifdef USE_ION
     mPostViewHeap =
             new IonPool(ion_heap,
@@ -3511,7 +3532,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
         ALOGE("initRaw X failed: error initializing mPostviewHeap.");
         return false;
     }
-
+#endif
     ALOGV("initRaw X");
     return true;
 }
@@ -3520,14 +3541,22 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
 void QualcommCameraHardware::deinitRawSnapshot()
 {
     ALOGV("deinitRawSnapshot E");
+#if 0
     mRawSnapShotPmemHeap.clear();
     mRawSnapShotPmemHeap = NULL;
+#endif
     ALOGV("deinitRawSnapshot X");
 }
 
 void QualcommCameraHardware::deinitRaw()
 {
     ALOGV("deinitRaw E");
+    if(NULL != mRawMapped) {
+        mRawMapped->release(mRawMapped);
+    }
+    if(mJpegMapped) {
+        mJpegMapped->release(mJpegMapped);
+    }
 #if 0
     mJpegHeap.clear();
     mJpegHeap = NULL;
@@ -3535,10 +3564,12 @@ void QualcommCameraHardware::deinitRaw()
     mRawHeap = NULL;
 #endif
     if(mCurrentTarget != TARGET_MSM8660){
+#if 0
        mThumbnailHeap.clear();
        mThumbnailHeap = NULL;
        mDisplayHeap.clear();
        mDisplayHeap = NULL;
+#endif
     }
 
     ALOGV("deinitRaw X");
@@ -5237,7 +5268,7 @@ bool QualcommCameraHardware::initRecord()
         ALOGI("%s: Clearing previous mPreviewHeap", __FUNCTION__);
         mRecordHeap.clear();
     }
-
+#if 0
 #ifdef USE_ION
     mRecordHeap = new IonPool(ion_heap,
                                 MemoryHeapBase::READ_ONLY | MemoryHeapBase::NO_CACHING,
@@ -5249,7 +5280,6 @@ bool QualcommCameraHardware::initRecord()
                                 0,
                                 "record");
 #endif
-#if 0
     mRecordHeap = new PmemPool(pmem_region,
                                MemoryHeapBase::READ_ONLY | MemoryHeapBase::NO_CACHING,
                                 MSM_PMEM_VIDEO,
@@ -7521,7 +7551,11 @@ sp<IMemory> QualcommCameraHardware::getVideoBuffer(int32_t index)
 {
     if(index > kRecordBufferCount)
         return NULL;
+    else
+        return NULL;
+#if 0
     return mRecordHeap->mBuffers[index];
+#endif
 }
 
 void QualcommCameraHardware::enableMsgType(int32_t msgType)
