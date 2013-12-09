@@ -3140,10 +3140,20 @@ bool QualcommCameraHardware::initPreview()
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
+        frame_parms.frame = frames[kPreviewBufferCount - 1];
+
+        if( mCurrentTarget == TARGET_MSM7630 || mCurrentTarget == TARGET_QSD8250 || mCurrentTarget == TARGET_MSM8660)
+            frame_parms.video_frame =  recordframes[kPreviewBufferCount - 1];
+        else
+            frame_parms.video_frame =  frames[kPreviewBufferCount - 1];
+
+        ALOGV ("initpreview before cam_frame thread carete , video frame  buffer=%lu fd=%d y_off=%d cbcr_off=%d \n",
+            (unsigned long)frame_parms.video_frame.buffer, frame_parms.video_frame.fd, frame_parms.video_frame.y_off,
+            frame_parms.video_frame.cbcr_off);
         mFrameThreadRunning = !pthread_create(&mFrameThread,
                                               &attr,
                                               frame_thread,
-                                              (void*)NULL);
+                                              (void*)&(frame_parms));
         ret = mFrameThreadRunning;
         mFrameThreadWaitLock.unlock();
     }
