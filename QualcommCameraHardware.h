@@ -63,7 +63,7 @@ typedef struct {
 } video_dis_param_ctrl_t;
 
 typedef uint32_t jpeg_event_t;
-#if 0
+#if 1
 typedef enum {
 	CAMERA_WB_MIN_MINUS_1,
 	CAMERA_WB_AUTO = 1,  /* This list must match aeecamera.h */
@@ -377,6 +377,31 @@ private:
     bool initRawSnapshot();
     void deinitRaw();
     void deinitRawSnapshot();
+    bool mPreviewThreadRunning;
+    Mutex mPreviewThreadWaitLock;
+    Condition mPreviewThreadWait;
+    friend void *preview_thread(void *user);
+    void runPreviewThread(void *data);
+
+    class FrameQueue : public RefBase{
+    private:
+        Mutex mQueueLock;
+        Condition mQueueWait;
+        bool mInitialized;
+
+        Vector<struct msm_frame *> mContainer;
+    public:
+        FrameQueue();
+        virtual ~FrameQueue();
+        bool add(struct msm_frame *element);
+        void flush();
+        struct msm_frame* get();
+        void init();
+        void deinit();
+        bool isInitialized();
+    };
+
+    FrameQueue mPreviewBusyQueue;
 
     bool mFrameThreadRunning;
     Mutex mFrameThreadWaitLock;
@@ -488,9 +513,9 @@ private:
 
     Mutex mCallbackLock;
     Mutex mOverlayLock;
-	Mutex mRecordLock;
-	Mutex mRecordFrameLock;
-	Condition mRecordWait;
+    Mutex mRecordLock;
+    Mutex mRecordFrameLock;
+    Condition mRecordWait;
     Condition mStateWait;
 
     /* mJpegSize keeps track of the size of the accumulated JPEG.  We clear it
@@ -514,6 +539,7 @@ private:
 
     pthread_t mFrameThread;
     pthread_t mVideoThread;
+    pthread_t mPreviewThread;
     pthread_t mSnapshotThread;
     pthread_t mDeviceOpenThread;
 
