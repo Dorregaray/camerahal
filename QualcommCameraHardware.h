@@ -18,13 +18,19 @@
 #ifndef ANDROID_HARDWARE_QUALCOMM_CAMERA_HARDWARE_H
 #define ANDROID_HARDWARE_QUALCOMM_CAMERA_HARDWARE_H
 
-#include "CameraHardwareInterface.h"
+#include <utils/threads.h>
 #include <binder/MemoryBase.h>
 #include <binder/MemoryHeapBase.h>
-#include <binder/MemoryHeapBaseIon.h>
 #include <utils/threads.h>
 #include <stdint.h>
-#include "Overlay.h"
+//#include <ui/egl/android_natives.h>
+#include <hardware/camera.h>
+#include <camera/Camera.h>
+#include <camera/CameraParameters.h>
+#include <system/window.h>
+#include <system/camera.h>
+#include <hardware/camera.h>
+#include <gralloc_priv.h>
 
 extern "C" {
 #include <linux/android_pmem.h>
@@ -33,6 +39,11 @@ extern "C" {
 }
 // Extra propriatary stuff (mostly from CM)
 #define MSM_CAMERA_CONTROL "/dev/msm_camera/control0"
+
+#define ION_CP_MM_HEAP_ID 8
+#define ION_CAMERA_HEAP_ID 20
+#define ION_IOMMU_HEAP_ID 25
+#define MSM_PMEM_VIDEO_VPE 16
 
 #define TRUE 1
 #define FALSE 0
@@ -168,6 +179,12 @@ struct str_map {
     int val;
 };
 
+struct buffer_map {
+    msm_frame *frame;
+    buffer_handle_t * buffer;
+    int size;
+};
+
 typedef enum {
     TARGET_MSM7625,
     TARGET_MSM7627,
@@ -183,6 +200,7 @@ typedef enum {
     LIVESHOT_STOPPED
 }liveshotState;
 
+#define MIN_UNDEQUEUD_BUFFER_COUNT 2
 struct target_map {
     const char *targetStr;
     targetType targetEnum;
@@ -198,16 +216,18 @@ struct board_property{
 
 namespace android {
 
-class QualcommCameraHardware : public CameraHardwareInterface {
+class QualcommCameraHardware : public RefBase{
 public:
 
-    virtual sp<IMemoryHeap> getPreviewHeap() const;
-    virtual sp<IMemoryHeap> getRawHeap() const;
+    //virtual sp<IMemoryHeap> getPreviewHeap() const;
+    //virtual sp<IMemoryHeap> getRawHeap() const;
 
-    virtual void setCallbacks(notify_callback notify_cb,
-                              data_callback data_cb,
-                              data_callback_timestamp data_cb_timestamp,
-                              void* user);
+    void setCallbacks(camera_notify_callback notify_cb,
+                            camera_data_callback data_cb,
+                            camera_data_timestamp_callback data_cb_timestamp,
+                            camera_request_memory get_memory,
+                            void *user);
+
     virtual void enableMsgType(int32_t msgType);
     virtual void disableMsgType(int32_t msgType);
     virtual bool msgTypeEnabled(int32_t msgType);
@@ -219,7 +239,7 @@ public:
     virtual status_t startRecording();
     virtual void stopRecording();
     virtual bool recordingEnabled();
-    virtual void releaseRecordingFrame(const sp<IMemory>& mem);
+    virtual void releaseRecordingFrame(const void *opaque);
     virtual status_t autoFocus();
     virtual status_t cancelAutoFocus();
     virtual status_t takePicture();
@@ -229,20 +249,18 @@ public:
     virtual status_t setParameters(const CameraParameters& params);
     virtual CameraParameters getParameters() const;
     virtual status_t sendCommand(int32_t command, int32_t arg1, int32_t arg2);
+    virtual int32_t getNumberOfVideoBuffers();
+    virtual sp<IMemory> getVideoBuffer(int32_t index);
     virtual status_t getBufferInfo(sp<IMemory>& Frame, size_t *alignedSize);
     virtual void encodeData();
 
+    virtual status_t set_PreviewWindow(void* param);
+    virtual status_t setPreviewWindow(preview_stream_ops_t* window);
     virtual void release();
-    virtual bool useOverlay();
-    virtual status_t setOverlay(const sp<Overlay> &overlay);
-
-    /* For compatibility with TouchPad binary libcamera */
-    virtual void stub1() {};
-    virtual void stub2() {};
     virtual void stopSnapshot() {};
 
-    static sp<CameraHardwareInterface> createInstance();
-    static sp<QualcommCameraHardware> getInstance();
+    static QualcommCameraHardware* createInstance();
+    static QualcommCameraHardware* getInstance();
 
     void receivePreviewFrame(struct msm_frame *frame);
     void receiveLiveSnapshot(uint32_t jpeg_size);
@@ -273,7 +291,12 @@ private:
     bool native_set_parms( mm_camera_parm_type_t type, uint16_t length, void *value, int *result);
     bool native_zoom_image(int fd, int srcOffset, int dstOffset, common_crop_t *crop);
 
-    static wp<QualcommCameraHardware> singleton;
+    status_t startInitialPreview();
+    void stopInitialPreview();
+    status_t getBuffersAndStartPreview();
+    void relinquishBuffers();
+
+    QualcommCameraHardware * singleton;
 
     /* These constants reflect the number of buffers that libmmcamera requires
        for preview and raw, and need to be updated when libmmcamera
@@ -282,6 +305,7 @@ private:
     static const int kPreviewBufferCount = NUM_PREVIEW_BUFFERS;
     static const int kRawBufferCount = 1;
     static const int kJpegBufferCount = 1;
+    static const int kTotalPreviewBufferCount = kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT;
 
     int jpegPadding;
 
@@ -313,7 +337,7 @@ private:
                 int frame_size,
                 const char *name);
 
-        virtual ~MemPool() = 0;
+        virtual ~MemPool(); // = 0;
 
         void completeInitialization();
         bool initialized() const {
@@ -331,6 +355,14 @@ private:
 
         const char *mName;
     };
+    struct DispMemPool : public MemPool {
+        DispMemPool(int fd, int buffer_size,
+            int num_buffers, int frame_size,
+            const char *name);
+            virtual ~DispMemPool();
+            int mFD;
+    };
+    sp<DispMemPool> mPreviewHeap[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
 
     struct AshmemPool : public MemPool {
         AshmemPool(int buffer_size, int num_buffers,
@@ -372,7 +404,7 @@ private:
     };
 
 #ifdef USE_ION
-    sp<IonPool> mPreviewHeap;
+    //sp<IonPool> mPreviewHeap;
     sp<IonPool> mRecordHeap;
     sp<IonPool> mThumbnailHeap;
     sp<IonPool> mRawHeap;
@@ -382,8 +414,9 @@ private:
     sp<AshmemPool> mMetaDataHeap;
     sp<IonPool> mRawSnapShotPmemHeap;
     sp<IonPool> mPostViewHeap;
+    sp<PmemPool> mInitialPreviewHeap;
 #else
-    sp<PmemPool> mPreviewHeap;
+    //sp<PmemPool> mPreviewHeap;
     sp<PmemPool> mRecordHeap;
     sp<PmemPool> mThumbnailHeap;
     sp<PmemPool> mRawHeap;
@@ -393,6 +426,7 @@ private:
     sp<AshmemPool> mMetaDataHeap;
     sp<PmemPool> mRawSnapShotPmemHeap;
     sp<PmemPool> mPostViewHeap;
+    sp<PmemPool> mInitialPreviewHeap;
 #endif
 
     sp<MMCameraDL> mMMCameraDLRef;
@@ -411,6 +445,9 @@ private:
     Condition mPreviewThreadWait;
     friend void *preview_thread(void *user);
     void runPreviewThread(void *data);
+
+    int mapBuffer(msm_frame *frame);
+    int mapFrame(buffer_handle_t *buffer);
 
     class FrameQueue : public RefBase{
     private:
@@ -478,6 +515,7 @@ private:
     bool mEncodePending;
     Mutex mEncodePendingWaitLock;
     Condition mEncodePendingWait;
+    bool mBuffersInitialized;
 
     void debugShowPreviewFPS() const;
     void debugShowVideoFPS() const;
@@ -533,6 +571,7 @@ private:
     bool isValidDimension(int w, int h);
 
     Mutex mLock;
+    Mutex mDisplayLock;
     Mutex mCamframeTimeoutLock;
     bool camframe_timeout_flag;
     bool mReleasedRecordingFrame;
@@ -579,17 +618,27 @@ private:
     int mBrightness;
     int mSkinToneEnhancement;
     int mHJR;
-    struct msm_frame frames[kPreviewBufferCount];
+    unsigned int mThumbnailMapped;
+    int mRawfd;
+    int mJpegfd;
+    camera_memory_t *mPreviewMapped[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
+    camera_memory_t *mRawMapped;
+    camera_memory_t *mJpegMapped;
+    camera_memory_t *mRawSnapShotMapped;
+    struct msm_frame frames[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
+    struct buffer_map frame_buffer[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
     struct msm_frame *recordframes;
     bool *record_buffers_tracking_flag;
     bool mInPreviewCallback;
-    bool mUseOverlay;
-    sp<Overlay>  mOverlay;
+    preview_stream_ops_t* mPreviewWindow;
+    android_native_buffer_t *mPostViewBuffer;
+    buffer_handle_t *mThumbnailBuffer;
 
     int32_t mMsgEnabled;    // camera msg to be handled
-    notify_callback mNotifyCallback;
-    data_callback mDataCallback;
-    data_callback_timestamp mDataCallbackTimestamp;
+    camera_notify_callback mNotifyCallback;
+    camera_data_callback mDataCallback;
+    camera_data_timestamp_callback mDataCallbackTimestamp;
+    camera_request_memory mGetMemory;
     void *mCallbackCookie;  // same for all callbacks
     int mDebugFps;
     int kPreviewBufferCountActual;
@@ -603,8 +652,9 @@ private:
 
     bool mDisEnabled;
     int mRotation;
-    bool mResetOverlayCrop;
+    bool mResetWindowCrop;
     int mThumbnailWidth, mThumbnailHeight;
+    int mTotalPreviewBufferCount;
     status_t setVpeParameters();
     status_t setDIS();
     bool strTexturesOn;
@@ -614,6 +664,10 @@ private:
     bool mSnapshotCancel;
     Mutex mSnapshotCancelLock;
 };
+
+extern "C" int HAL_getNumberOfCameras();
+extern "C" void HAL_getCameraInfo(int cameraId, struct CameraInfo* cameraInfo);
+extern "C" QualcommCameraHardware* HAL_openCameraHardware(int cameraId);
 
 }; // namespace android
 
