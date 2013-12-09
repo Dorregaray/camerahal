@@ -2539,13 +2539,10 @@ void QualcommCameraHardware::runPreviewThread(void *data)
         mLastQueuedFrame = (void *)frame->buffer;
         bufferIndex = mapBuffer(frame);
         if(bufferIndex >= 0) {
-        //Need to encapsulate this in IMemory object and send
-#if 0
+            //Need to encapsulate this in IMemory object and send
             if (pcb != NULL && (msgEnabled & CAMERA_MSG_PREVIEW_FRAME))
-                pcb(CAMERA_MSG_PREVIEW_FRAME, mPreviewHeap[bufferIndex]->mBuffers[0],
+                pcb(CAMERA_MSG_PREVIEW_FRAME,(camera_memory_t *) mPreviewMapped[bufferIndex]->data,0,NULL,
                 pdata);
-#endif
-            // TODO : may have to reutn proper frame as pcb
             mDisplayLock.lock();
             if( mPreviewWindow != NULL) {
                 retVal = mPreviewWindow->enqueue_buffer(mPreviewWindow,
