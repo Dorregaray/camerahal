@@ -3437,8 +3437,9 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     else
        pmem_region = "/dev/pmem_adsp";
 #ifdef USE_ION
+    unsigned cnt = 0;
     if (allocate_ion_memory(&raw_main_ion_fd[cnt], &raw_alloc[cnt], &raw_ion_info_fd[cnt],
-                            ion_heap, mJpegMaxSize, &mRawfd[cnt]) < 0){
+                            ion_heap, mJpegMaxSize, &mRawfd/*[cnt]*/) < 0){
         ALOGE("do_mmap: Open device %s failed!\n",pmem_region);
         return NULL;
     }
@@ -3525,8 +3526,9 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     if (initJpegHeap) {
         ALOGE("sravnak initraw 16");
 #ifdef USE_ION
+        int cnt = 0;
         if (allocate_ion_memory(&Jpeg_main_ion_fd[cnt], &Jpeg_alloc[cnt], &Jpeg_ion_info_fd[cnt],
-                                    ion_heap, mJpegMaxSize, &mJpegfd[cnt]) < 0){
+                                    ion_heap, mJpegMaxSize, &mJpegfd/*[cnt]*/) < 0){
             ALOGE("do_mmap: Open device %s failed!\n",pmem_region);
             return NULL;
         }
@@ -3633,6 +3635,7 @@ void QualcommCameraHardware::deinitRaw()
         close(mRawfd);
         mRawMapped = NULL;
 #ifdef USE_ION
+        int cnt = 0;
         deallocate_ion_memory(&raw_main_ion_fd[cnt], &raw_ion_info_fd[cnt]);
 #endif
     }
@@ -3641,6 +3644,7 @@ void QualcommCameraHardware::deinitRaw()
         close(mJpegfd);
         mJpegMapped = NULL;
 #ifdef USE_ION
+        int cnt = 0;
         deallocate_ion_memory(&Jpeg_main_ion_fd[cnt], &Jpeg_ion_info_fd[cnt]);
 #endif
     }
@@ -4566,7 +4570,7 @@ void QualcommCameraHardware::runSnapshotThread(void *data)
 void *snapshot_thread(void *user)
 {
     ALOGD("snapshot_thread E");
-    sp<QualcommCameraHardware> obj = QualcommCameraHardware::getInstance();
+    QualcommCameraHardware *obj = QualcommCameraHardware::getInstance();
     if (obj != 0) {
         obj->runSnapshotThread(user);
     }
