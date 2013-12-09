@@ -327,7 +327,7 @@ static int kRecordBufferCount;
 static bool mVpeEnabled;
 
 static int HAL_numOfCameras = 0;
-static camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
+static qcamera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 static int HAL_currentCameraId = 0;
 static mm_camera_config mCfgControl;
 static bool mCameraOpen;
