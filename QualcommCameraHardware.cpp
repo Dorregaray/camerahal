@@ -1156,7 +1156,9 @@ QualcommCameraHardware::QualcommCameraHardware()
       mTotalPreviewBufferCount(0),
       strTexturesOn(false),
       mPrevHeapDeallocRunning(false),
-      mSnapshotCancel(false)
+      mSnapshotCancel(false),
+      mRawMapped (NULL),
+      mJpegMapped(NULL)
 {
     ALOGI("QualcommCameraHardware constructor E");
     mMMCameraDLRef = MMCameraDL::getInstance();
@@ -2305,7 +2307,7 @@ static bool register_buf(int size,
 void QualcommCameraHardware::runFrameThread(void *data)
 {
     ALOGV("runFrameThread E");
-
+    int type;
     int cnt;
 
     ALOGV("%s, libmmcamera: %p\n", __FUNCTION__, libmmcamera);
@@ -2403,6 +2405,7 @@ void QualcommCameraHardware::runFrameThread(void *data)
                     false,false);
                 if(mRecordMapped[cnt]) {
                     mRecordMapped[cnt]->release(mRecordMapped[cnt]);
+                    close(mRecordfd[cnt]);
                 }
             }
         }
@@ -3553,9 +3556,13 @@ void QualcommCameraHardware::deinitRaw()
     ALOGV("deinitRaw E");
     if(NULL != mRawMapped) {
         mRawMapped->release(mRawMapped);
+        close(mRawfd);
+        mRawMapped = NULL;
     }
-    if(mJpegMapped) {
+    if(NULL != mJpegMapped) {
         mJpegMapped->release(mJpegMapped);
+        close(mJpegfd);
+        mJpegMapped = NULL;
     }
 #if 0
     mJpegHeap.clear();
@@ -3908,15 +3915,15 @@ void QualcommCameraHardware::release()
     ALOGI("release X: mCameraRunning = %d, mFrameThreadRunning = %d", mCameraRunning, mFrameThreadRunning);
     ALOGI("mVideoThreadRunning = %d, mSnapshotThreadRunning = %d, mJpegThreadRunning = %d", mVideoThreadRunning, mSnapshotThreadRunning, mJpegThreadRunning);
     ALOGI("camframe_timeout_flag = %d, mAutoFocusThreadRunning = %d", camframe_timeout_flag, mAutoFocusThreadRunning);
+
+    libmmcamera = NULL;
+    mMMCameraDLRef.clear();
 }
 
 QualcommCameraHardware::~QualcommCameraHardware()
 {
     ALOGI("~QualcommCameraHardware E");
     LINK_mm_camera_destroy();
-
-    libmmcamera = NULL;
-    //mMMCameraDLRef.clear();
 
     //singleton_lock.lock();
 
