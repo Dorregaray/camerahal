@@ -4209,7 +4209,7 @@ void QualcommCameraHardware::stopInitialPreview()
 void QualcommCameraHardware::stopPreviewInternal()
 {
     ALOGI("stopPreviewInternal E: %d", mCameraRunning);
-    if (mCameraRunning) {
+    if (mCameraRunning && mPreviewWindow!=NULL) {
         // Cancel auto focus.
         {
             if (mNotifyCallback && (mMsgEnabled & CAMERA_MSG_FOCUS)) {
