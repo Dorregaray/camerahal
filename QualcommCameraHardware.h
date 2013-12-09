@@ -447,6 +447,7 @@ private:
     void runPreviewThread(void *data);
 
     int mapBuffer(msm_frame *frame);
+    int mapvideoBuffer( msm_frame *frame);
     int mapFrame(buffer_handle_t *buffer);
 
     class FrameQueue : public RefBase{
@@ -621,10 +622,12 @@ private:
     unsigned int mThumbnailMapped;
     int mRawfd;
     int mJpegfd;
+    int mRecordfd[9];
     camera_memory_t *mPreviewMapped[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
     camera_memory_t *mRawMapped;
     camera_memory_t *mJpegMapped;
     camera_memory_t *mRawSnapShotMapped;
+    camera_memory_t *mRecordMapped[9];
     struct msm_frame frames[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
     struct buffer_map frame_buffer[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
     struct msm_frame *recordframes;

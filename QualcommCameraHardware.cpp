@@ -2372,6 +2372,21 @@ void QualcommCameraHardware::runFrameThread(void *data)
         ALOGV("runFrameThread: clearing mRecordHeap");
         mRecordHeap.clear();
         mRecordHeap = NULL;
+
+        int CbCrOffset = PAD_TO_2K(mDimension.video_width  * mDimension.video_height);
+        for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
+            if (mRecordfd[cnt] > 0) {
+                ALOGE("Unregistering buffer %d with kernel",cnt);
+                register_buf(mRecordFrameSize,
+                            mRecordFrameSize, CbCrOffset, 0,
+                            mRecordfd[cnt],
+                            0,
+                            (uint8_t *)recordframes[cnt].buffer,
+                            MSM_PMEM_VIDEO,
+                            false, false);
+                ALOGE("Came back from register call to kernel");
+            }
+        }
     }
 
     mFrameThreadWaitLock.lock();
@@ -2627,6 +2642,19 @@ int QualcommCameraHardware::mapBuffer(struct msm_frame *frame) {
     return ret;
 }
 
+int QualcommCameraHardware::mapvideoBuffer(struct msm_frame *frame)
+{
+    int ret = -1;
+    for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
+        if ((unsigned int)mRecordMapped[cnt]->data == (unsigned int)frame->buffer) {
+            ret = cnt;
+            ALOGE("found match returning %d", ret);
+            break;
+        }
+    }
+    return ret;
+}
+
 int QualcommCameraHardware::mapFrame(buffer_handle_t *buffer) {
     int ret = -1;
     for (int cnt = 0; cnt < mTotalPreviewBufferCount; cnt++) {
@@ -2689,23 +2717,23 @@ void QualcommCameraHardware::runVideoThread(void *data)
         pthread_mutex_unlock(&(g_busy_frame_queue.mut));
         ALOGV("in video_thread : got video frame ");
 
-        if (UNLIKELY(mDebugFps)) {
+        /*if (UNLIKELY(mDebugFps)) {
             debugShowVideoFPS();
-        }
+        }*/
 
         if(vframe != NULL) {
             // Find the offset within the heap of the current buffer.
-            ALOGV("Got video frame :  buffer %d base %d ", vframe->buffer,
-                (unsigned long int)mRecordHeap->mHeap->base());
-            ssize_t offset =
-                (ssize_t)vframe->buffer - (ssize_t)mRecordHeap->mHeap->base();
-            ALOGV("offset = %d , alignsize = %d , new_offset = %d", (int)offset, mRecordHeap->mAlignedBufferSize,
-                (int)(offset / mRecordHeap->mAlignedBufferSize));
+            //ALOGV("Got video frame :  buffer %d base %d ", vframe->buffer,
+            //    (unsigned long int)mRecordHeap->mHeap->base());
+            //ssize_t offset =
+            //    (ssize_t)vframe->buffer - (ssize_t)mRecordHeap->mHeap->base();
+            //ALOGV("offset = %d , alignsize = %d , new_offset = %d", (int)offset, mRecordHeap->mAlignedBufferSize,
+            //    (int)(offset / mRecordHeap->mAlignedBufferSize));
 
-            offset /= mRecordHeap->mAlignedBufferSize;
+            //offset /= mRecordHeap->mAlignedBufferSize;
 
             //set the track flag to true for this video buffer
-            record_buffers_tracking_flag[offset] = true;
+            //record_buffers_tracking_flag[offset] = true;
 
             /* Extract the timestamp of this frame */
             nsecs_t timeStamp = nsecs_t(vframe->ts.tv_sec)*1000000000LL + vframe->ts.tv_nsec;
@@ -2731,7 +2759,7 @@ void QualcommCameraHardware::runVideoThread(void *data)
           frameCnt++;
 #endif
             // Enable IF block to give frames to encoder , ELSE block for just simulation
-#if 0
+#if 1
             ALOGV("in video_thread : got video frame, before if check giving frame to services/encoder");
             mCallbackLock.lock();
             int msgEnabled = mMsgEnabled;
@@ -2739,9 +2767,11 @@ void QualcommCameraHardware::runVideoThread(void *data)
             void *rdata = mCallbackCookie;
             mCallbackLock.unlock();
 
+            int index = mapvideoBuffer(vframe);
+            record_buffers_tracking_flag[index] = true;
             if(rcb != NULL && (msgEnabled & CAMERA_MSG_VIDEO_FRAME) ) {
-                ALOGV("in video_thread : got video frame, giving frame to services/encoder");
-                rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME, mRecordHeap->mBuffers[offset], rdata);
+                ALOGV("in video_thread : got video frame, giving frame to services/encoder index = %d", index);
+                rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME, mRecordMapped[index],0,rdata);
             }
 #else
             // 720p output2  : simulate release frame here:
@@ -3554,6 +3584,7 @@ status_t QualcommCameraHardware::setPreviewWindow(preview_stream_ops_t* window)
         /*if(mPreviewWindow!=NULL)
         relinquishBuffers();*/
     }
+    ALOGE("Set preview window:: ");
     mDisplayLock.lock();
     mPreviewWindow = window;
     mDisplayLock.unlock();
@@ -5162,7 +5193,7 @@ bool QualcommCameraHardware::initRecord()
     int ion_heap = ION_CP_MM_HEAP_ID;
     int CbCrOffset;
     int recordBufferSize;
-    int active;
+    int active, type =0;
 
     ALOGV("initRecord E");
 
@@ -5235,7 +5266,13 @@ bool QualcommCameraHardware::initRecord()
         return false;
     }
 #endif
+#if 1
+    ALOGV("initRecord: Allocating Record buffers");
+    pmem_region = "/dev/pmem_adsp";
+#endif
+
     for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
+#if 0
         //recordframes[cnt].fd = mRecordHeap->mHeap->getHeapID();
         recordframes[cnt].buffer = (unsigned long)mm_camera_do_mmap(mRecordFrameSize, &(recordframes[cnt].fd));
         if(!recordframes[cnt].buffer)
@@ -5243,6 +5280,25 @@ bool QualcommCameraHardware::initRecord()
             ALOGE("Buffer allocation for record fram %d failed",cnt);
             return false;
         }
+#endif
+        mRecordfd[cnt] = open(pmem_region, O_RDWR|O_SYNC);
+        if (mRecordfd[cnt] <= 0) {
+            ALOGE("%s: Open device %s failed!\n",__func__, pmem_region);
+            return NULL;
+        }
+        ALOGE("%s  Record fd is %d ", __func__, mRecordfd[cnt]);
+        mRecordMapped[cnt]=mGetMemory(mRecordfd[cnt], mRecordFrameSize,1,mCallbackCookie);
+        ALOGE("sravnak initrecord 14");
+        if(mRecordMapped==NULL) {
+            ALOGE("Failed to get camera memory for mRecordMapped heap");
+        }else{
+            ALOGE("Received following info for record mapped data:%p,handle:%p, size:%d,release:%p",
+            mRecordMapped[cnt]->data ,mRecordMapped[cnt]->handle, mRecordMapped[cnt]->size, mRecordMapped[cnt]->release);
+        }
+#if 1
+        recordframes[cnt].buffer = (unsigned int)mRecordMapped[cnt]->data;
+        recordframes[cnt].fd = mRecordfd[cnt];
+#endif
         recordframes[cnt].y_off = 0;
         recordframes[cnt].cbcr_off = CbCrOffset;
         recordframes[cnt].path = OUTPUT_TYPE_V;
@@ -5251,13 +5307,19 @@ bool QualcommCameraHardware::initRecord()
             (unsigned long)recordframes[cnt].buffer, recordframes[cnt].fd, recordframes[cnt].y_off,
             recordframes[cnt].cbcr_off);
         active=(cnt<ACTIVE_VIDEO_BUFFERS);
+        type = MSM_PMEM_VIDEO;
+        if((mVpeEnabled) && (cnt == kRecordBufferCount-1)) {
+            type = MSM_PMEM_VIDEO_VPE;
+            active = 1;
+        }
         ALOGE("Registering buffer %d with kernel",cnt);
         register_buf(mRecordFrameSize,
                             mRecordFrameSize, CbCrOffset, 0,
                             recordframes[cnt].fd,
                             0,
-                            (uint8_t *)recordframes[cnt].buffer/*(uint8_t *)mThumbnailMapped*/,
+                            (uint8_t *)recordframes[cnt].buffer,
                             MSM_PMEM_VIDEO,
+                            type,
                             active);
         ALOGE("Came back from register call to kernel");
     }
@@ -5442,7 +5504,7 @@ void QualcommCameraHardware::stopRecording()
 
 void QualcommCameraHardware::releaseRecordingFrame(const void *opaque)
 {
-    ALOGV("releaseRecordingFrame E");
+    ALOGV("%s : BEGIN, opaque = 0x%p",__func__, opaque);
     Mutex::Autolock rLock(&mRecordFrameLock);
     mReleasedRecordingFrame = true;
     mRecordWait.signal();
@@ -5457,7 +5519,6 @@ void QualcommCameraHardware::releaseRecordingFrame(const void *opaque)
         int cnt;
         for (cnt = 0; cnt < kRecordBufferCount; cnt++) {
             if(recordframes[cnt].buffer && ((unsigned long)opaque == recordframes[cnt].buffer) ){
-//            if((unsigned int)recordframes[cnt].buffer == ((unsigned int)heap->base()+ offset)){
                 ALOGV("in release recording frame found match , releasing buffer %d", (unsigned int)recordframes[cnt].buffer);
                 releaseframe = &recordframes[cnt];
                 break;
@@ -5864,7 +5925,7 @@ bool QualcommCameraHardware::receiveRawPicture()
 
             status_t retVal = mPreviewWindow->enqueue_buffer(mPreviewWindow,
                                                              mThumbnailBuffer);
-ALOGE(" enQ thumbnailbuffer");
+            ALOGE(" enQ thumbnailbuffer");
             if( retVal != NO_ERROR)
                 ALOGE("%s: Queuebuffer failed for postview buffer", __FUNCTION__);
             mDisplayLock.unlock();
@@ -5890,8 +5951,8 @@ ALOGE(" enQ thumbnailbuffer");
         }
 
         if (mDataCallback && (mMsgEnabled & CAMERA_MSG_RAW_IMAGE))
-            mDataCallback(CAMERA_MSG_RAW_IMAGE, mDisplayHeap->mBuffers[0],
-                            data_counter, mCallbackCookie);
+            mDataCallback(CAMERA_MSG_RAW_IMAGE, mRawMapped,data_counter,
+                          NULL, mCallbackCookie);
         /*if(strTexturesOn == true) {
             ALOGI("Raw Data given to app for processing...will wait for jpeg encode call");
             mEncodePendingWaitLock.lock();
