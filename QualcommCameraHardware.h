@@ -41,11 +41,6 @@ extern "C" {
 // Extra propriatary stuff (mostly from CM)
 #define MSM_CAMERA_CONTROL "/dev/msm_camera/control0"
 
-#define ION_CP_MM_HEAP_ID 8
-#define ION_CAMERA_HEAP_ID 20
-#define ION_IOMMU_HEAP_ID 25
-#define MSM_PMEM_VIDEO_VPE 16
-
 #define TRUE 1
 #define FALSE 0
 

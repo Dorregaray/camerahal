@@ -46,6 +46,7 @@
 #include <system/camera.h>
 
 #include <linux/msm_mdp.h>
+#include <linux/msm_ion.h>
 #include <linux/fb.h>
 
 #define LIKELY(exp)   __builtin_expect(!!(exp), 1)
@@ -2870,12 +2871,14 @@ int QualcommCameraHardware::allocate_ion_memory(int *main_ion_fd, struct ion_all
     /* to make it page size aligned */
     alloc->len = (alloc->len + 4095) & (~4095);
     alloc->align = 4096;
-    alloc->flags = 0x1 << ion_type;
+    alloc->flags = ION_FLAG_CACHED;
+    alloc->heap_mask = (1 << ion_type);
 
+    ALOGV("ION allocation, len: %d, align: %d, flags: %d, mask: 0x%08x\n", alloc->len, alloc->align, alloc->flags, alloc->heap_mask);
     rc = ioctl(*main_ion_fd, ION_IOC_ALLOC, alloc);
     if (rc < 0) {
-        ALOGE("ION allocation failed\n");
-      goto ION_ALLOC_FAILED;
+        ALOGE("ION allocation failed, rc: %d, errno: %d, error: %s\n", rc, errno, strerror(errno));
+        goto ION_ALLOC_FAILED;
     }
 
     ion_info_fd->handle = alloc->handle;
