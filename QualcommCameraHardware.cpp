@@ -2392,9 +2392,7 @@ void QualcommCameraHardware::runFrameThread(void *data)
             }
 #endif
             type = MSM_PMEM_VIDEO;
-            if((mVpeEnabled) && (cnt == kRecordBufferCount-1)) {
-                type = MSM_PMEM_VIDEO_VPE;
-            }
+            ALOGE("%s: unregister record buffers[%d] with camera driver", __FUNCTION__, cnt);
             if(recordframes) {
                 register_buf(mRecordFrameSize,
                     mRecordFrameSize, CbCrOffset, 0,
@@ -3154,6 +3152,7 @@ bool QualcommCameraHardware::initRawSnapshot()
        pmem_region = "/dev/pmem_adsp";
 
     //Pmem based pool for Camera Driver
+#if 0
 #ifdef USE_ION
     mRawSnapShotPmemHeap = new IonPool(ion_heap,
                                     MemoryHeapBase::READ_ONLY | MemoryHeapBase::NO_CACHING,
@@ -3174,6 +3173,7 @@ bool QualcommCameraHardware::initRawSnapshot()
                                     0,
                                     0,
                                     "raw pmem snapshot camera");
+#endif
 #endif
     if (!mRawSnapShotPmemHeap->initialized()) {
         mRawSnapShotPmemHeap.clear();
@@ -3555,6 +3555,13 @@ void QualcommCameraHardware::deinitRaw()
 {
     ALOGV("deinitRaw E");
     if(NULL != mRawMapped) {
+        ALOGE("Unregister MAIN_IMG");
+        register_buf(mJpegMaxSize,
+                mRawSize,mCbCrOffsetRaw,0,
+                mRawfd,0,
+                (uint8_t *)mRawMapped->data,
+                MSM_PMEM_MAINIMG,
+                0, 0);
         mRawMapped->release(mRawMapped);
         close(mRawfd);
         mRawMapped = NULL;
@@ -7618,6 +7625,7 @@ bool QualcommCameraHardware::storePreviewFrameForPostview(void) {
          mPreviewFrameSize);
     if(mPostViewHeap == NULL) {
         int CbCrOffset = PAD_TO_WORD(mPreviewFrameSize * 2/3);
+#if 0
 #ifdef USE_ION
         mPostViewHeap =
            new IonPool(ION_CAMERA_HEAP_ID,
@@ -7647,6 +7655,7 @@ bool QualcommCameraHardware::storePreviewFrameForPostview(void) {
                ALOGE(" Failed to initialize Postview Heap");
                return false;
             }
+#endif
     }
 #if 0
     if( mPostViewHeap != NULL && mLastQueuedFrame != NULL) {
