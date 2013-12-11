@@ -967,66 +967,6 @@ static void cam_frame_post_video (struct msm_frame *p)
     return;
 }
 
-QualcommCameraHardware::FrameQueue::FrameQueue(){
-    mInitialized = false;
-}
-
-QualcommCameraHardware::FrameQueue::~FrameQueue(){
-    flush();
-}
-
-void QualcommCameraHardware::FrameQueue::init(){
-    Mutex::Autolock l(&mQueueLock);
-    mInitialized = true;
-    mQueueWait.signal();
-}
-
-void QualcommCameraHardware::FrameQueue::deinit(){
-    Mutex::Autolock l(&mQueueLock);
-    mInitialized = false;
-    mQueueWait.signal();
-}
-
-bool QualcommCameraHardware::FrameQueue::isInitialized(){
-   Mutex::Autolock l(&mQueueLock);
-   return mInitialized;
-}
-
-bool QualcommCameraHardware::FrameQueue::add(
-                struct msm_frame * element){
-    Mutex::Autolock l(&mQueueLock);
-    if(mInitialized == false)
-        return false;
-
-    mContainer.add(element);
-    mQueueWait.signal();
-    return true;
-}
-
-struct msm_frame * QualcommCameraHardware::FrameQueue::get(){
-
-    struct msm_frame *frame;
-    mQueueLock.lock();
-    while(mInitialized && mContainer.isEmpty()){
-        mQueueWait.wait(mQueueLock);
-    }
-
-    if(!mInitialized){
-        mQueueLock.unlock();
-        return NULL;
-    }
-
-    frame = mContainer.itemAt(0);
-    mContainer.removeAt(0);
-    mQueueLock.unlock();
-    return frame;
-}
-
-void QualcommCameraHardware::FrameQueue::flush(){
-    Mutex::Autolock l(&mQueueLock);
-    mContainer.clear();
-}
-
 void QualcommCameraHardware::storeTargetType(void) {
     char mDeviceName[PROPERTY_VALUE_MAX];
     property_get("ro.board.platform",mDeviceName," ");
@@ -2318,27 +2258,6 @@ void QualcommCameraHardware::runFrameThread(void *data)
         LINK_cam_frame(data);
         ALOGV("after LINK_cam_frame");
     }
-
-    //waiting for preview thread to complete before clearing of the buffers
-    mPreviewThreadWaitLock.lock();
-    while (mPreviewThreadRunning) {
-        ALOGV("runframethread: waiting for preview  thread to complete.");
-        mPreviewThreadWait.wait(mPreviewThreadWaitLock);
-        ALOGV("initPreview: old preview thread completed.");
-    }
-    mPreviewThreadWaitLock.unlock();
-
-    // Cancelling previewBuffers and returning them to display before stopping preview
-    // This will ensure that all preview buffers are available for dequeing when
-    //startPreview is called again with the same ANativeWindow object (snapshot case). If the
-    //ANativeWindow is a new one(camera-camcorder switch case) because the app passed a new
-    //surface then buffers will be re-allocated and not returned from the old pool.
-    relinquishBuffers();
-
-    mPreviewBusyQueue.flush();
-    /* Flush the Free Q */
-    LINK_cam_frame_flush_free_video();
-
     ALOGV("runFrameThread: clearing mPreviewHeap");
 #if 0
     mPmemWaitLock.lock();
@@ -2421,236 +2340,6 @@ void QualcommCameraHardware::runFrameThread(void *data)
     ALOGV("runFrameThread X");
 }
 
-void QualcommCameraHardware::runPreviewThread(void *data)
-{
-    msm_frame* frame = NULL;
-
-    status_t retVal = NO_ERROR;
-    CAMERA_HAL_UNUSED(data);
-    android_native_buffer_t *buffer;
-    buffer_handle_t *handle = NULL;
-    int bufferIndex = 0;
-
-    while((frame = mPreviewBusyQueue.get()) != NULL) {
-
-        if (UNLIKELY(mDebugFps)) {
-            debugShowPreviewFPS();
-        }
-        mCallbackLock.lock();
-        int msgEnabled = mMsgEnabled;
-        camera_data_callback pcb = mDataCallback;
-        void *pdata = mCallbackCookie;
-        camera_data_timestamp_callback rcb = mDataCallbackTimestamp;
-        void *rdata = mCallbackCookie;
-        camera_data_callback mcb = mDataCallback;
-        void *mdata = mCallbackCookie;
-        mCallbackLock.unlock();
-        int i=0;
-        int *data=(int*)frame;
-
-        // Find the offset within the heap of the current buffer.
-        ssize_t offset_addr = 0; // TODO , use proper value
-//        ssize_t offset_addr =
-//            (ssize_t)frame->buffer - (ssize_t)mPreviewHeap->mHeap->base();
-//        ssize_t offset = offset_addr / mPreviewHeap->mAlignedBufferSize;
-
-        common_crop_t *crop = (common_crop_t *) (frame->cropinfo);
-
-#ifdef DUMP_PREVIEW_FRAMES
-        static int frameCnt = 0;
-        int written;
-                if (frameCnt >= 0 && frameCnt <= 10 ) {
-                    char buf[128];
-                    sprintf(buf, "/data/%d_preview.yuv", frameCnt);
-                    int file_fd = open(buf, O_RDWR | O_CREAT, 0777);
-                    ALOGV("dumping preview frame %d", frameCnt);
-                    if (file_fd < 0) {
-                        ALOGE("cannot open file\n");
-                    }
-                    else
-                    {
-                        ALOGV("dumping data");
-                        written = write(file_fd, (uint8_t *)frame->buffer,
-                            mPreviewFrameSize );
-                        if(written < 0)
-                          ALOGE("error in data write");
-                    }
-                    close(file_fd);
-              }
-              frameCnt++;
-#endif
-
-        mInPreviewCallback = true;
-        if (crop->in1_w != 0 && crop->in1_h != 0) {
-            zoomCropInfo.left = (crop->out1_w - crop->in1_w + 1) / 2 - 1;
-            zoomCropInfo.top = (crop->out1_h - crop->in1_h + 1) / 2 - 1;
-            /* There can be scenarios where the in1_wXin1_h and
-             * out1_wXout1_h are same. In those cases, reset the
-             * x and y to zero instead of negative for proper zooming
-             */
-            if(zoomCropInfo.left < 0) zoomCropInfo.left = 0;
-            if(zoomCropInfo.top < 0) zoomCropInfo.top = 0;
-            zoomCropInfo.right = zoomCropInfo.left + crop->in1_w;
-            zoomCropInfo.bottom = zoomCropInfo.top + crop->in1_h;
-            mPreviewWindow-> set_crop (mPreviewWindow,
-                                      zoomCropInfo.left,
-                                      zoomCropInfo.top,
-                                      zoomCropInfo.right,
-                                      zoomCropInfo.bottom);
-            /* Set mResetOverlayCrop to true, so that when there is
-             * no crop information, setCrop will be called
-             * with zero crop values.
-             */
-            mResetWindowCrop = true;
-
-        } else {
-            // Reset zoomCropInfo variables. This will ensure that
-            // stale values wont be used for postview
-            zoomCropInfo.left = 0;
-            zoomCropInfo.top = 0;
-            zoomCropInfo.right = crop->in1_w;
-            zoomCropInfo.bottom = crop->in1_h;
-            /* This reset is required, if not, overlay driver continues
-             * to use the old crop information for these preview
-             * frames which is not the correct behavior. To avoid
-             * multiple calls, reset once.
-             */
-            if(mResetWindowCrop == true){
-                mPreviewWindow-> set_crop (mPreviewWindow,
-                                      zoomCropInfo.left,
-                                      zoomCropInfo.top,
-                                      zoomCropInfo.right,
-                                      zoomCropInfo.bottom);
-                 mResetWindowCrop = false;
-            }
-        }
-        /* To overcome a timing case where we could be having the overlay refer to deallocated
-            mDisplayHeap(and showing corruption), the mDisplayHeap is not deallocated untill the
-            first preview frame is queued to the overlay in 8660. Also adding the condition
-            to check if snapshot is currently in progress ensures that the resources being
-            used by the snapshot thread are not incorrectly deallocated by preview thread*/
-        if ((mCurrentTarget == TARGET_MSM8660)&&(mFirstFrame == true)) {
-            ALOGD(" receivePreviewFrame : first frame queued, display heap being deallocated");
-            mThumbnailHeap.clear();
-            mDisplayHeap.clear();
-            mDisplayHeap.clear();
-//            mPostviewHeap.clear();
-            mFirstFrame = false;
-        }
-        mLastQueuedFrame = (void *)frame->buffer;
-        bufferIndex = mapBuffer(frame);
-        if(bufferIndex >= 0) {
-            //Need to encapsulate this in IMemory object and send
-            if (pcb != NULL && (msgEnabled & CAMERA_MSG_PREVIEW_FRAME))
-                pcb(CAMERA_MSG_PREVIEW_FRAME,(camera_memory_t *) mPreviewMapped[bufferIndex]->data,0,NULL,
-                pdata);
-            mDisplayLock.lock();
-            if( mPreviewWindow != NULL) {
-                retVal = mPreviewWindow->enqueue_buffer(mPreviewWindow,
-                                            frame_buffer[bufferIndex].buffer);
-                ALOGE(" enQ preview buffers %d ",frame_buffer[bufferIndex].frame->fd);
-              //ALOGE(" enQ preview buffers ");
-           //  if( retVal != NO_ERROR)
-               //LOGE("%s: Failed while queueing buffer %d for display."
-                //   " Error = %d", __FUNCTION__,
-               //    mPreviewHeap[bufferIndex]->mFD, retVal);
-                int stride;
-                retVal = mPreviewWindow->dequeue_buffer(mPreviewWindow,
-                                         &(handle),
-                                         &(stride));
-                private_handle_t *bhandle = (private_handle_t *)(*handle);
-                ALOGE(" deQ preview buffers %d ",bhandle->fd);
-                if (retVal != NO_ERROR) {
-                    ALOGE("%s: Failed while dequeueing buffer from display."
-                        " Error = %d", __FUNCTION__, retVal);
-                } else {
-                    retVal = mPreviewWindow->lock_buffer(mPreviewWindow,handle);
-                    //yyan todo use handle to find out buffer
-                    if(retVal != NO_ERROR)
-                        ALOGE("%s: Failed while dequeueing buffer from"
-                            "display. Error = %d", __FUNCTION__, retVal);
-                }
-            }
-            mDisplayLock.unlock();
-        } else
-            ALOGE("Could not find the buffer");
-
-        // If output  is NOT enabled (targets otherthan 7x30 , 8x50 and 8x60 currently..)
-
-        nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec)*1000000000LL + frame->ts.tv_nsec;
-
-        if( (mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250) && (mCurrentTarget != TARGET_MSM8660)) {
-            if(rcb != NULL && (msgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
-                rcb(systemTime(), CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex], 0, rdata);
-                Mutex::Autolock rLock(&mRecordFrameLock);
-                if (mReleasedRecordingFrame != true) {
-                    ALOGV("block waiting for frame release");
-                    mRecordWait.wait(mRecordFrameLock);
-                    ALOGV("frame released, continuing");
-                }
-                mReleasedRecordingFrame = false;
-            }
-        }
-#if 0
-        if ( mCurrentTarget == TARGET_MSM8660 ) {
-            mMetaDataWaitLock.lock();
-            if (mFaceDetectOn == true && mSendMetaData == true) {
-                mSendMetaData = false;
-                fd_roi_t *fd = (fd_roi_t *)(frame->roi_info.info);
-                int faces_detected = fd->rect_num;
-                int max_faces_detected = MAX_ROI * 4;
-                int array[max_faces_detected + 1];
-
-                array[0] = faces_detected * 4;
-                for (int i = 1, j = 0;j < MAX_ROI; j++, i = i + 4) {
-                    if (j < faces_detected) {
-                        array[i]   = fd->faces[j].x;
-                        array[i+1] = fd->faces[j].y;
-                        array[i+2] = fd->faces[j].dx;
-                        array[i+3] = fd->faces[j].dx;
-                    } else {
-                        array[i]   = -1;
-                        array[i+1] = -1;
-                        array[i+2] = -1;
-                        array[i+3] = -1;
-                    }
-                }
-                memcpy((uint32_t *)mMetaDataHeap->mHeap->base(), (uint32_t *)array, (sizeof(int)*(MAX_ROI*4+1)));
-                if  (mcb != NULL && (msgEnabled & CAMERA_MSG_PREVIEW_METADATA)) {
-                    mcb(CAMERA_MSG_PREVIEW_METADATA, mMetaDataHeap->mBuffers[0], mdata);
-                }
-            }
-            mMetaDataWaitLock.unlock();
-        }
-#endif
-        bufferIndex = mapFrame(handle);
-        if(bufferIndex >= 0) {
-            LINK_camframe_free_video(&frames[bufferIndex]);
-        } else {
-            ALOGE("Could not find the Frame");
-
-            // Special Case: Stoppreview is issued which causes thumbnail buffer
-            // to be cancelled. Frame thread has still not exited. In preview thread
-            // dequeue returns incorrect buffer id (previously cancelled thumbnail buffer)
-            // This will throw error "Could not find frame". We need to cancel the incorrectly
-            // dequeued buffer here to ensure that all buffers are available for the next
-            // startPreview call.
-
-            mDisplayLock.lock();
-            ALOGV(" error Cancelling preview buffers  ");
-            retVal = mPreviewWindow->cancel_buffer(mPreviewWindow,
-                  &(buffer->handle));
-            if(retVal != NO_ERROR)
-                ALOGE("%s:  cancelBuffer failed for buffer", __FUNCTION__);
-            mDisplayLock.unlock();
-        }
-    }
-    mPreviewThreadWaitLock.lock();
-    mPreviewThreadRunning = false;
-    mPreviewThreadWait.signal();
-    mPreviewThreadWaitLock.unlock();
-}
-
 int QualcommCameraHardware::mapBuffer(struct msm_frame *frame) {
     int ret = -1;
     for (int cnt = 0; cnt < mTotalPreviewBufferCount; cnt++) {
@@ -2684,18 +2373,6 @@ int QualcommCameraHardware::mapFrame(buffer_handle_t *buffer) {
         }
     }
     return ret;
-}
-
-void *preview_thread(void *user)
-{
-    ALOGV("preview_thread E");
-    QualcommCameraHardware  *obj = QualcommCameraHardware::getInstance();
-    if (obj != 0) {
-        obj->runPreviewThread(user);
-    }
-    else ALOGE("not starting preview thread: the object went away!");
-    ALOGV("preview_thread X");
-    return NULL;
 }
 
 void QualcommCameraHardware::runVideoThread(void *data)
@@ -3114,26 +2791,6 @@ bool QualcommCameraHardware::initPreview()
             frames[cnt].path = OUTPUT_TYPE_P; // MSM_FRAME_ENC;
 #endif
         }
-
-        mPreviewBusyQueue.init();
-        LINK_cam_frame_flush_free_video();
-        for(int i=ACTIVE_PREVIEW_BUFFERS ;i <kPreviewBufferCount; i++)
-            LINK_camframe_free_video(&frames[i]);
-
-        mPreviewThreadWaitLock.lock();
-        pthread_attr_t pattr;
-        pthread_attr_init(&pattr);
-        pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
-
-        mPreviewThreadRunning = !pthread_create(&mPreviewThread,
-                                      &pattr,
-                                      preview_thread,
-                                      (void*)NULL);
-        ret = mPreviewThreadRunning;
-        mPreviewThreadWaitLock.unlock();
-
-        if(ret == false)
-            return ret;
 
         mFrameThreadWaitLock.lock();
         pthread_attr_t attr;
@@ -3907,10 +3564,10 @@ status_t QualcommCameraHardware::getBuffersAndStartPreview() {
     mBuffersInitialized = true;
 
     //Starting preview now as the preview buffers are allocated
- //   if(!mPreviewInitialized && !mCameraRunning) {   // sravank TODO just for testing 
-        ALOGE("setPreviewWindow: Starting preview after buffer allocation");
+    //if(!mPreviewInitialized && !mCameraRunning) {   // sravank TODO just for testing 
+        ALOGE("setPreviewWindow: Starting preview after buffer allocation, initialized: %d, running: %d, run: %d", mPreviewInitialized, mCameraRunning, (!mPreviewInitialized && !mCameraRunning));
         startPreviewInternal();
- //   }
+    //}
     ALOGI(" %s : X ",__FUNCTION__);
     return NO_ERROR;
 }
@@ -4258,7 +3915,6 @@ void QualcommCameraHardware::stopPreviewInternal()
         ALOGE("%s, before calling deinitpre mPreviewInitialized = %d", __FUNCTION__, mPreviewInitialized);
         if (mPreviewInitialized) {
             ALOGE("before calling deinitpreview");
-            mPreviewBusyQueue.deinit();
             deinitPreview();
             if( ( mCurrentTarget == TARGET_MSM7630 ) ||
                 (mCurrentTarget == TARGET_QSD8250) ||
@@ -5238,15 +4894,228 @@ void QualcommCameraHardware::receiveLiveSnapshot(uint32_t jpeg_size)
 
 void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
 {
+    status_t retVal = NO_ERROR;
+    android_native_buffer_t *buffer;
+    buffer_handle_t *handle = NULL;
+    int bufferIndex = 0;
+
     ALOGV("receivePreviewFrame E");
     if (!mCameraRunning) {
         ALOGE("ignoring preview callback--camera has been stopped");
         LINK_camframe_free_video(frame);
         return;
     }
+        if (UNLIKELY(mDebugFps)) {
+            debugShowPreviewFPS();
+        }
+        mCallbackLock.lock();
+        int msgEnabled = mMsgEnabled;
+        camera_data_callback pcb = mDataCallback;
+        void *pdata = mCallbackCookie;
+        camera_data_timestamp_callback rcb = mDataCallbackTimestamp;
+        void *rdata = mCallbackCookie;
+        camera_data_callback mcb = mDataCallback;
+        void *mdata = mCallbackCookie;
+        mCallbackLock.unlock();
 
-    if(mPreviewBusyQueue.add(frame) == false)
-        LINK_camframe_free_video(frame);
+        int i=0;
+        int *data=(int*)frame;
+
+        // Find the offset within the heap of the current buffer.
+        ssize_t offset_addr = 0; // TODO , use proper value
+//        ssize_t offset_addr =
+//            (ssize_t)frame->buffer - (ssize_t)mPreviewHeap->mHeap->base();
+//        ssize_t offset = offset_addr / mPreviewHeap->mAlignedBufferSize;
+
+        common_crop_t *crop = (common_crop_t *) (frame->cropinfo);
+
+#ifdef DUMP_PREVIEW_FRAMES
+        static int frameCnt = 0;
+        int written;
+                if (frameCnt >= 0 && frameCnt <= 10 ) {
+                    char buf[128];
+                    sprintf(buf, "/data/%d_preview.yuv", frameCnt);
+                    int file_fd = open(buf, O_RDWR | O_CREAT, 0777);
+                    ALOGV("dumping preview frame %d", frameCnt);
+                    if (file_fd < 0) {
+                        ALOGE("cannot open file\n");
+                    }
+                    else
+                    {
+                        ALOGV("dumping data");
+                        written = write(file_fd, (uint8_t *)frame->buffer,
+                            mPreviewFrameSize );
+                        if(written < 0)
+                          ALOGE("error in data write");
+                    }
+                    close(file_fd);
+              }
+              frameCnt++;
+#endif
+        mInPreviewCallback = true;
+        if (crop->in1_w != 0 && crop->in1_h != 0) {
+            zoomCropInfo.left = (crop->out1_w - crop->in1_w + 1) / 2 - 1;
+            zoomCropInfo.top = (crop->out1_h - crop->in1_h + 1) / 2 - 1;
+            /* There can be scenarios where the in1_wXin1_h and
+             * out1_wXout1_h are same. In those cases, reset the
+             * x and y to zero instead of negative for proper zooming
+             */
+            if(zoomCropInfo.left < 0) zoomCropInfo.left = 0;
+            if(zoomCropInfo.top < 0) zoomCropInfo.top = 0;
+            zoomCropInfo.right = zoomCropInfo.left + crop->in1_w;
+            zoomCropInfo.bottom = zoomCropInfo.top + crop->in1_h;
+            mPreviewWindow-> set_crop (mPreviewWindow,
+                                      zoomCropInfo.left,
+                                      zoomCropInfo.top,
+                                      zoomCropInfo.right,
+                                      zoomCropInfo.bottom);
+            /* Set mResetOverlayCrop to true, so that when there is
+             * no crop information, setCrop will be called
+             * with zero crop values.
+             */
+            mResetWindowCrop = true;
+
+        } else {
+            // Reset zoomCropInfo variables. This will ensure that
+            // stale values wont be used for postview
+            zoomCropInfo.left = 0;
+            zoomCropInfo.top = 0;
+            zoomCropInfo.right = crop->in1_w;
+            zoomCropInfo.bottom = crop->in1_h;
+            /* This reset is required, if not, overlay driver continues
+             * to use the old crop information for these preview
+             * frames which is not the correct behavior. To avoid
+             * multiple calls, reset once.
+             */
+            if(mResetWindowCrop == true){
+                mPreviewWindow-> set_crop (mPreviewWindow,
+                                      zoomCropInfo.left,
+                                      zoomCropInfo.top,
+                                      zoomCropInfo.right,
+                                      zoomCropInfo.bottom);
+                 mResetWindowCrop = false;
+            }
+        }
+        /* To overcome a timing case where we could be having the overlay refer to deallocated
+            mDisplayHeap(and showing corruption), the mDisplayHeap is not deallocated untill the
+            first preview frame is queued to the overlay in 8660. Also adding the condition
+            to check if snapshot is currently in progress ensures that the resources being
+            used by the snapshot thread are not incorrectly deallocated by preview thread*/
+        if ((mCurrentTarget == TARGET_MSM8660)&&(mFirstFrame == true)) {
+            ALOGD(" receivePreviewFrame : first frame queued, display heap being deallocated");
+            mThumbnailHeap.clear();
+            mDisplayHeap.clear();
+            mDisplayHeap.clear();
+//            mPostviewHeap.clear();
+            mFirstFrame = false;
+        }
+        mLastQueuedFrame = (void *)frame->buffer;
+        bufferIndex = mapBuffer(frame);
+        if(bufferIndex >= 0) {
+            //Need to encapsulate this in IMemory object and send
+            if (pcb != NULL && (msgEnabled & CAMERA_MSG_PREVIEW_FRAME))
+                pcb(CAMERA_MSG_PREVIEW_FRAME,(camera_memory_t *) mPreviewMapped[bufferIndex]->data,0,NULL,
+                pdata);
+            mDisplayLock.lock();
+            if( mPreviewWindow != NULL) {
+                retVal = mPreviewWindow->enqueue_buffer(mPreviewWindow,
+                                            frame_buffer[bufferIndex].buffer);
+                ALOGE(" enQ preview buffers %d ",frame_buffer[bufferIndex].frame->fd);
+              //ALOGE(" enQ preview buffers ");
+           //  if( retVal != NO_ERROR)
+               //LOGE("%s: Failed while queueing buffer %d for display."
+                //   " Error = %d", __FUNCTION__,
+               //    mPreviewHeap[bufferIndex]->mFD, retVal);
+                int stride;
+                retVal = mPreviewWindow->dequeue_buffer(mPreviewWindow,
+                                         &(handle),
+                                         &(stride));
+                private_handle_t *bhandle = (private_handle_t *)(*handle);
+                ALOGE(" deQ preview buffers %d ",bhandle->fd);
+                if (retVal != NO_ERROR) {
+                    ALOGE("%s: Failed while dequeueing buffer from display."
+                        " Error = %d", __FUNCTION__, retVal);
+                } else {
+                    retVal = mPreviewWindow->lock_buffer(mPreviewWindow,handle);
+                    //yyan todo use handle to find out buffer
+                    if(retVal != NO_ERROR)
+                        ALOGE("%s: Failed while dequeueing buffer from"
+                            "display. Error = %d", __FUNCTION__, retVal);
+                }
+            }
+            mDisplayLock.unlock();
+        } else
+            ALOGE("Could not find the buffer");
+
+        // If output  is NOT enabled (targets otherthan 7x30 , 8x50 and 8x60 currently..)
+
+        nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec)*1000000000LL + frame->ts.tv_nsec;
+
+        if( (mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250) && (mCurrentTarget != TARGET_MSM8660)) {
+            if(rcb != NULL && (msgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
+                rcb(systemTime(), CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex], 0, rdata);
+                Mutex::Autolock rLock(&mRecordFrameLock);
+                if (mReleasedRecordingFrame != true) {
+                    ALOGV("block waiting for frame release");
+                    mRecordWait.wait(mRecordFrameLock);
+                    ALOGV("frame released, continuing");
+                }
+                mReleasedRecordingFrame = false;
+            }
+        }
+#if 0
+        if ( mCurrentTarget == TARGET_MSM8660 ) {
+            mMetaDataWaitLock.lock();
+            if (mFaceDetectOn == true && mSendMetaData == true) {
+                mSendMetaData = false;
+                fd_roi_t *fd = (fd_roi_t *)(frame->roi_info.info);
+                int faces_detected = fd->rect_num;
+                int max_faces_detected = MAX_ROI * 4;
+                int array[max_faces_detected + 1];
+
+                array[0] = faces_detected * 4;
+                for (int i = 1, j = 0;j < MAX_ROI; j++, i = i + 4) {
+                    if (j < faces_detected) {
+                        array[i]   = fd->faces[j].x;
+                        array[i+1] = fd->faces[j].y;
+                        array[i+2] = fd->faces[j].dx;
+                        array[i+3] = fd->faces[j].dx;
+                    } else {
+                        array[i]   = -1;
+                        array[i+1] = -1;
+                        array[i+2] = -1;
+                        array[i+3] = -1;
+                    }
+                }
+                memcpy((uint32_t *)mMetaDataHeap->mHeap->base(), (uint32_t *)array, (sizeof(int)*(MAX_ROI*4+1)));
+                if  (mcb != NULL && (msgEnabled & CAMERA_MSG_PREVIEW_METADATA)) {
+                    mcb(CAMERA_MSG_PREVIEW_METADATA, mMetaDataHeap->mBuffers[0], mdata);
+                }
+            }
+            mMetaDataWaitLock.unlock();
+        }
+#endif
+        bufferIndex = mapFrame(handle);
+        if(bufferIndex >= 0) {
+            LINK_camframe_free_video(&frames[bufferIndex]);
+        } else {
+            ALOGE("Could not find the Frame");
+
+            // Special Case: Stoppreview is issued which causes thumbnail buffer
+            // to be cancelled. Frame thread has still not exited. In preview thread
+            // dequeue returns incorrect buffer id (previously cancelled thumbnail buffer)
+            // This will throw error "Could not find frame". We need to cancel the incorrectly
+            // dequeued buffer here to ensure that all buffers are available for the next
+            // startPreview call.
+
+            mDisplayLock.lock();
+            ALOGV(" error Cancelling preview buffers  ");
+            retVal = mPreviewWindow->cancel_buffer(mPreviewWindow,
+                  &(buffer->handle));
+            if(retVal != NO_ERROR)
+                ALOGE("%s:  cancelBuffer failed for buffer", __FUNCTION__);
+            mDisplayLock.unlock();
+        }
 
     ALOGV("receivePreviewFrame X");
 }
@@ -5482,10 +5351,10 @@ bool QualcommCameraHardware::initRecord()
     LINK_cam_frame_flush_free_video();
     if(mVpeEnabled) {
         //If VPE is enabled, the VPE buffer shouldn't be added to Free Q initally.
-        for(int i=ACTIVE_VIDEO_BUFFERS;i <kRecordBufferCount-1; i++)
+        for(int i=ACTIVE_VIDEO_BUFFERS+1;i <kRecordBufferCount-1; i++)
             LINK_camframe_free_video(&recordframes[i]);
     } else {
-        for(int i=ACTIVE_VIDEO_BUFFERS;i <kRecordBufferCount; i++)
+        for(int i=ACTIVE_VIDEO_BUFFERS+1;i <kRecordBufferCount; i++)
             LINK_camframe_free_video(&recordframes[i]);
     }
     ALOGV("initRecord X");
@@ -7341,7 +7210,7 @@ QualcommCameraHardware::PmemPool::PmemPool(const char *pmem_pool,
                      ALOGV(" pmempool creating video buffers : active %d ", active);
                 }
                 else if (pmem_type == MSM_PMEM_PREVIEW){
-                     active = (cnt < ACTIVE_PREVIEW_BUFFERS);
+                     active = (cnt < (num_buf-1));
                 }
                 register_buf(mBufferSize,
                          mFrameSize, mCbCrOffset, myOffset,

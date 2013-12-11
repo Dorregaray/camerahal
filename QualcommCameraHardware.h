@@ -440,35 +440,10 @@ private:
     bool initRawSnapshot();
     void deinitRaw();
     void deinitRawSnapshot();
-    bool mPreviewThreadRunning;
-    Mutex mPreviewThreadWaitLock;
-    Condition mPreviewThreadWait;
-    friend void *preview_thread(void *user);
-    void runPreviewThread(void *data);
 
     int mapBuffer(msm_frame *frame);
     int mapvideoBuffer( msm_frame *frame);
     int mapFrame(buffer_handle_t *buffer);
-
-    class FrameQueue : public RefBase{
-    private:
-        Mutex mQueueLock;
-        Condition mQueueWait;
-        bool mInitialized;
-
-        Vector<struct msm_frame *> mContainer;
-    public:
-        FrameQueue();
-        virtual ~FrameQueue();
-        bool add(struct msm_frame *element);
-        void flush();
-        struct msm_frame* get();
-        void init();
-        void deinit();
-        bool isInitialized();
-    };
-
-    FrameQueue mPreviewBusyQueue;
 
     bool mFrameThreadRunning;
     Mutex mFrameThreadWaitLock;
