@@ -15,6 +15,7 @@ $(shell touch $(OUT)/obj/SHARED_LIBRARIES/libmmjpeg_intermediates/export_include
 LOCAL_CFLAGS := -DDLOPEN_LIBMMCAMERA=$(DLOPEN_LIBMMCAMERA)
 
 LOCAL_CFLAGS += -DHW_ENCODE
+LOCAL_CFLAGS += -DUSES_OLD_LIBMMJPEG
 
 LOCAL_CFLAGS += -include bionic/libc/kernel/common/linux/socket.h
 

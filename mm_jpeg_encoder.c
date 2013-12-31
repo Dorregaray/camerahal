@@ -204,7 +204,7 @@ void mm_jpege_output_produced_handler(void *p_user_data, void *p_arg,
   pthread_mutex_unlock(&jpegcb_mutex);
 }
 
-#if !defined(_TARGET_7x2x_) && !defined(_TARGET_7x27A_)
+#if !defined(_TARGET_7x2x_) && !defined(_TARGET_7x27A_) && !defined(USES_OLD_LIBMMJPEG)
 /*===========================================================================
 FUNCTION      jpege_output_produced_handler2
 
@@ -460,7 +460,9 @@ int8_t mm_jpeg_encoder_encode(const cam_ctrl_dimension_t * dimension,
   }
 
   /* Set phy offset */
+#if !defined(USES_OLD_LIBMMJPEG)
   jpeg_buffer_set_phy_offset(tn_img_info.p_fragments[0].color.yuv.luma_buf, thumbnail_offset);
+#endif
 
   CDBG("jpeg_encoder_encode size %dx%d\n",dimension->orig_picture_dx,dimension->orig_picture_dy);
   main_img_info.width = dimension->orig_picture_dx * w_scale_factor;
@@ -511,7 +513,9 @@ int8_t mm_jpeg_encoder_encode(const cam_ctrl_dimension_t * dimension,
     }
   }
 
+#if !defined(USES_OLD_LIBMMJPEG)
   jpeg_buffer_set_phy_offset(main_img_info.p_fragments[0].color.yuv.luma_buf, snapshot_offset);
+#endif
 
   /*  Set Source */
   jpege_source.p_main = &main_img_info;
@@ -529,7 +533,7 @@ int8_t mm_jpeg_encoder_encode(const cam_ctrl_dimension_t * dimension,
     return FALSE;
   }
 
-#if defined(_TARGET_7x2x_) || defined(_TARGET_7x27A_)
+#if defined(_TARGET_7x2x_) || defined(_TARGET_7x27A_) || defined(USES_OLD_LIBMMJPEG)
   jpege_dest.p_output_handler = (jpege_output_handler_t) mm_jpege_output_produced_handler;
 #else
   jpege_dest.p_output_handler = mm_jpege_output_produced_handler2;
