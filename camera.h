@@ -57,6 +57,11 @@ typedef struct exif_info_t * exif_info_obj_t;
 
 #define PAD_TO_2K(a)                 (((a)+2047)&~2047)
 
+#define ION_CP_MM_HEAP_ID 8
+#define ION_CAMERA_HEAP_ID 20
+#define ION_IOMMU_HEAP_ID 25
+#define MSM_PMEM_VIDEO_VPE 16
+
 typedef enum
 {
     YCRCBLP_H2V2 = 0,
@@ -402,7 +407,7 @@ typedef struct {
   int8_t camera_id;
   cam_position_t position;
   uint32_t sensor_mount_angle;
-}camera_info_t;
+}qcamera_info_t;
 
 typedef struct {
   camera_mode_t mode;
@@ -1111,7 +1116,7 @@ typedef struct la_config {
   uint16_t numIt;
 
 } la_config;
-
+#if 0
 typedef enum {
   CAMERA_ANTIBANDING_OFF,
   CAMERA_ANTIBANDING_60HZ,
@@ -1132,7 +1137,7 @@ typedef enum {
   CAMERA_WB_SHADE,
   CAMERA_WB_MAX_PLUS_1
 } config3a_wb_t;
-
+#endif
 typedef enum {
   LED_MODE_OFF,
   LED_MODE_AUTO,

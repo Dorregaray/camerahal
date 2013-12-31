@@ -44,6 +44,9 @@ ifeq ($(TARGET_BOARD_PLATFORM),msm8660)
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-core/omxcore
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-still/mm-omx
 endif
+LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
+LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-legacy/libgralloc
+LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-legacy/libgenlock
 
 #yyan if debug service layer and up , use stub camera!
 LOCAL_C_INCLUDES += \

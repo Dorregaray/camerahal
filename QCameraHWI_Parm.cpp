@@ -22,9 +22,6 @@
 #include <utils/Errors.h>
 #include <utils/threads.h>
 #include <binder/MemoryHeapPmem.h>
-#ifdef USE_ION
-#include <binder/MemoryHeapIon.h>
-#endif
 #include <utils/String16.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -221,7 +218,7 @@ static int iso_speed_values[] = {
 
 
 extern int HAL_numOfCameras;
-extern camera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
+extern qcamera_info_t HAL_cameraInfo[MSM_MAX_CAMERA_SENSORS];
 extern mm_camera_t * HAL_camerahandle[MSM_MAX_CAMERA_SENSORS];
 
 namespace android {
@@ -247,13 +244,13 @@ static const str_map effects[] = {
 };
 
 static const str_map iso[] = {
-    { CameraParameters::ISO_AUTO,  CAMERA_ISO_AUTO},
+/*    { CameraParameters::ISO_AUTO,  CAMERA_ISO_AUTO},
     { CameraParameters::ISO_HJR,   CAMERA_ISO_DEBLUR},
     { CameraParameters::ISO_100,   CAMERA_ISO_100},
     { CameraParameters::ISO_200,   CAMERA_ISO_200},
     { CameraParameters::ISO_400,   CAMERA_ISO_400},
     { CameraParameters::ISO_800,   CAMERA_ISO_800 },
-    { CameraParameters::ISO_1600,  CAMERA_ISO_1600 }
+    { CameraParameters::ISO_1600,  CAMERA_ISO_1600 }*/
 };
 
 static const str_map scenemode[] = {
@@ -1549,6 +1546,7 @@ status_t  QCameraHardwareInterface::setISOValue(const CameraParameters& params) 
         ALOGE("%s:MM_CAMERA_PARM_ISO not supported", __func__);
         return NO_ERROR;
     }
+#if 0
     const char *str = params.get(CameraParameters::KEY_ISO_MODE);
     ALOGE("ISO string : %s",str);
     int temp_hjr;
@@ -1576,6 +1574,7 @@ status_t  QCameraHardwareInterface::setISOValue(const CameraParameters& params) 
             return NO_ERROR;
         }
     }
+#endif
     return BAD_VALUE;
 }
 
@@ -2145,6 +2144,7 @@ status_t QCameraHardwareInterface::setAntibanding(const CameraParameters& params
        ALOGE("ANTIBANDING mode is not supported for this sensor");
        return NO_ERROR;
     }
+#if 0
     const char *str = params.get(CameraParameters::KEY_ANTIBANDING);
     if (str != NULL) {
         int value = (camera_antibanding_type)attr_lookup(
@@ -2162,7 +2162,7 @@ status_t QCameraHardwareInterface::setAntibanding(const CameraParameters& params
         }
     }
     ALOGE("Invalid antibanding value: %s", (str == NULL) ? "NULL" : str);
-
+#endif
     return BAD_VALUE;
 }
 

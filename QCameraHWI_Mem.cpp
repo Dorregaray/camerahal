@@ -1,5 +1,5 @@
 /*
-** Copyright (c) 2011 Code Aurora Forum. All rights reserved.
+** Copyright (c) 2011-2012 Code Aurora Forum. All rights reserved.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -24,9 +24,6 @@
 #include <utils/Errors.h>
 #include <utils/threads.h>
 #include <binder/MemoryHeapPmem.h>
-#ifdef USE_ION
-#include <binder/MemoryHeapIon.h>
-#endif
 #include <utils/String16.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,11 +33,13 @@
 #include <math.h>
 #if HAVE_ANDROID_OS
 #include <linux/android_pmem.h>
+#include <linux/ion.h>
 #endif
 #include <linux/ioctl.h>
 #include <camera/CameraParameters.h>
 #include <media/mediarecorder.h>
 #include <gralloc_priv.h>
+#include <media/msm_camera.h>
 
 #include "QCameraHWI_Mem.h"
 
@@ -231,7 +230,6 @@ bool register_record_buffers(bool register_buffer) {
     return true;
 }
 #endif
-#ifndef USE_ION
 PmemPool::PmemPool(const char *pmem_pool,
                                            int flags,
                                            int pmem_type,
@@ -367,52 +365,6 @@ PmemPool::~PmemPool()
 #endif
     ALOGI("%s: %s X", __FUNCTION__, mName);
 }
-#else
-const char IonPool::mIonDevName[] = "/dev/ion";
-
-IonPool::IonPool(int flags,
-                 int buffer_size,
-                 int num_buffers,
-                 int frame_size,
-                 int cbcr_offset,
-                 int yOffset,
-                 const char *name) :
-    MemPool(buffer_size,num_buffers,frame_size,name),
-    mCbCrOffset(cbcr_offset),
-    myOffset(yOffset)
-{
-    ALOGI("constructing MemPool %s backed by ion pool %s: "
-         "%d frames @ %d bytes, buffer size %d",
-         mName,
-         mIonDevName, num_buffers, frame_size,
-         buffer_size);
-
-    // Make a new mmap'ed heap that can be shared across processes.
-    // mAlignedBufferSize is already in 4k aligned.
-    mAlignedSize = mAlignedBufferSize * num_buffers;
-    sp<MemoryHeapIon> ionHeap = new MemoryHeapIon(mIonDevName, mAlignedSize,
-                    flags, 0x1<<ION_CP_MM_HEAP_ID);
-    if (ionHeap->getHeapID() >= 0) {
-        mHeap = ionHeap;
-        ionHeap.clear();
-
-        mFd = mHeap->getHeapID();
-        ALOGE("ion pool %s fd = %d", mIonDevName, mFd);
-        ALOGE("mBufferSize=%d, mAlignedBufferSize=%d\n",
-                      mBufferSize, mAlignedBufferSize);
-        completeInitialization();
-    }
-    else
-        ALOGE("ion pool %s error: could not create master heap!", mIonDevName);
-    ALOGI("%s: (%s) X ", __FUNCTION__, mName);
-}
-
-IonPool::~IonPool()
-{
-    ALOGI("%s: %s E", __FUNCTION__, mName);
-    ALOGI("%s: %s X", __FUNCTION__, mName);
-}
-#endif
 MemPool::~MemPool()
 {
     ALOGV("destroying MemPool %s", mName);
