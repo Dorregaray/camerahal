@@ -85,8 +85,8 @@ extern "C" {
 #define HDR_HAL_FRAME 2
 
 //Default FPS
-#define MINIMUM_FPS 5
-#define MAXIMUM_FPS 200
+#define MINIMUM_FPS 15
+#define MAXIMUM_FPS 31
 #define DEFAULT_FPS MAXIMUM_FPS
 
 //Default Picture Width
@@ -99,8 +99,8 @@ extern "C" {
 
 #define THUMBNAIL_SIZE_COUNT (sizeof(thumbnail_sizes)/sizeof(thumbnail_size_type))
 #define DEFAULT_THUMBNAIL_SETTING 4
-#define THUMBNAIL_WIDTH_STR "512"
-#define THUMBNAIL_HEIGHT_STR "384"
+#define THUMBNAIL_WIDTH_STR "192"
+#define THUMBNAIL_HEIGHT_STR "144"
 #define THUMBNAIL_SMALL_HEIGHT 144
 
 #define JPEG_THUMBNAIL_SIZE_COUNT (sizeof(jpeg_thumbnail_sizes)/sizeof(camera_size_type))
@@ -144,13 +144,13 @@ static camera_size_type jpeg_thumbnail_sizes[]  = {
 };
 
 static camera_size_type default_preview_sizes[] = {
-  { 1920, 1088}, //1080p
-  { 1280, 720}, // 720P, reserved
-  { 960, 720}, // for panorama
+//  { 1920, 1088}, //1080p
+//  { 1280, 720}, // 720P, reserved
+//  { 960, 720}, // for panorama
 //  { 960, 544},
-  { 800, 480}, // WVGA
-  { 768, 432},
-  { 720, 480},
+//  { 800, 480}, // WVGA
+//  { 768, 432},
+//  { 720, 480},
   { 640, 480}, // VGA
   { 576, 432},
   { 480, 320}, // HVGA
@@ -162,12 +162,12 @@ static camera_size_type default_preview_sizes[] = {
 };
 
 static camera_size_type supported_video_sizes[] = {
-  { 1920, 1088},// 1080p
-  { 1280, 720}, // 720p
-  { 960, 720},  // for panorama
-  { 800, 480},  // WVGA
-  { 768, 432},
-  { 720, 480},  // 480p
+//  { 1920, 1088},// 1080p
+//  { 1280, 720}, // 720p
+//  { 960, 720},  // for panorama
+//  { 800, 480},  // WVGA
+//  { 768, 432},
+//  { 720, 480},  // 480p
   { 640, 480},  // VGA
   { 480, 320},  // HVGA
   { 352, 288},  // CIF
@@ -187,15 +187,16 @@ static struct camera_size_type zsl_picture_sizes[] = {
 };
 
 static camera_size_type default_picture_sizes[] = {
-  { 4000, 3000}, // 12MP
-  { 3264, 2448}, // 8MP
-  { 3264, 1840}, // 6MP
-  { 2592, 1944}, // 5MP
-  { 2992, 1680},
-  { 2592, 1456},
-  { 2048, 1536}, // 3MP QXGA
-  { 1920, 1088}, //HD1080
-  { 1600, 1200}, // 2MP UXGA
+//  { 4000, 3000}, // 12MP
+//  { 3264, 2448}, // 8MP
+//  { 3264, 1840}, // 6MP
+//  { 2592, 1944}, // 5MP
+//  { 2992, 1680},
+//  { 2592, 1456},
+//  { 2048, 1536}, // 3MP QXGA
+//  { 1920, 1088}, //HD1080
+//  { 1600, 1200}, // 2MP UXGA
+  { 1280, 1024}, // 1.3MP
   { 1280, 768}, //WXGA
   { 1280, 720}, //HD720
   { 1024, 768}, // 1MP XGA
