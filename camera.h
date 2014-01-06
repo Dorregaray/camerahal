@@ -57,11 +57,6 @@ typedef struct exif_info_t * exif_info_obj_t;
 
 #define PAD_TO_2K(a)                 (((a)+2047)&~2047)
 
-#define ION_CP_MM_HEAP_ID 8
-#define ION_CAMERA_HEAP_ID 20
-#define ION_IOMMU_HEAP_ID 25
-#define MSM_PMEM_VIDEO_VPE 16
-
 typedef enum
 {
     YCRCBLP_H2V2 = 0,
