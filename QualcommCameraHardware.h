@@ -152,6 +152,7 @@ typedef enum {
 #define EXIFTAGID_EXIF_DATE_TIME          0x3B9004
 #define EXIFTAGID_EXIF_DATE_TIME_CREATED  0x3b9004
 #define EXIFTAGID_FOCAL_LENGTH            0x45920a
+#define EXIFTAGID_GPS_PROCESSINGMETHOD    0x1B001B
 
 typedef enum {
     AUTO,
