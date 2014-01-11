@@ -1883,19 +1883,20 @@ static void setLatLon(exif_tag_id_t tag, const char *latlonString) {
 void QualcommCameraHardware::setGpsParameters() {
     const char *str = NULL;
     ALOGV("%s E", __FUNCTION__);
-#if 0
+
     str = mParameters.get(CameraParameters::KEY_GPS_PROCESSING_METHOD);
     if (str!=NULL) {
        memcpy(gpsProcessingMethod, ExifAsciiPrefix, EXIF_ASCII_PREFIX_SIZE);
        strlcpy(gpsProcessingMethod + EXIF_ASCII_PREFIX_SIZE, str,
            GPS_PROCESSING_METHOD_SIZE-1);
        gpsProcessingMethod[EXIF_ASCII_PREFIX_SIZE + GPS_PROCESSING_METHOD_SIZE-1] = '\0';
+       addExifTag(EXIFTAGID_GPS_PROCESSINGMETHOD, EXIF_ASCII,
            EXIF_ASCII_PREFIX_SIZE + strlen(gpsProcessingMethod + EXIF_ASCII_PREFIX_SIZE) + 1,
            1, (void *)gpsProcessingMethod);
     }
 
     str = NULL;
-#endif
+
     //Set Latitude
     str = mParameters.get(CameraParameters::KEY_GPS_LATITUDE);
 
