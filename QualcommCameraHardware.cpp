@@ -4901,6 +4901,9 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
     int bufferIndex = 0;
 
     ALOGV("receivePreviewFrame E");
+    if (!frame) {
+        return;
+    }
     if (!mCameraRunning) {
         ALOGE("ignoring preview callback--camera has been stopped");
         LINK_camframe_free_video(frame);
