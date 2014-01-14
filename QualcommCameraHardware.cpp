@@ -2069,6 +2069,7 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
     addExifTag(EXIFTAGID_FOCAL_LENGTH, EXIF_RATIONAL, 1,
                 1, (void *)&focalLength);
 
+#if 0
     uint8_t * thumbnailHeap = NULL;
     int thumbfd = -1;
 
@@ -2092,6 +2093,7 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         thumbnailHeap = NULL;
         thumbfd = 0;
     }
+#endif
 
     if( (mCurrentTarget == TARGET_MSM7630) ||
         (mCurrentTarget == TARGET_MSM8660) ||
@@ -2136,10 +2138,10 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         mCrop.in1_h = mDimension.orig_picture_dy - jpegPadding; // when cropping is enabled
 
         if (!LINK_jpeg_encoder_encode(&mDimension,
-                                      thumbnailHeap,
-                                      thumbfd,
-                                      (uint8_t *)mRawHeap->mHeap->base(),
-                                      mRawHeap->mHeap->getHeapID(),
+                                      (uint8_t *)mJpegMapped->data, //FIXME: thumbnail buffer
+                                      mJpegfd,                      //FIXME: thumbnail fd
+                                      (uint8_t *)mRawMapped->data,  //FIXME: snapshot buffer
+                                      mRawfd,                       //FIXME: snapshot fd
                                       &mCrop, exif_data, exif_table_numEntries,
                                       jpegPadding/2, CbCrOffset)) {
             ALOGE("native_jpeg_encode: jpeg_encoder_encode failed.");
@@ -2147,10 +2149,10 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         }
     } else {
         if (!LINK_jpeg_encoder_encode(&mDimension,
-                                     thumbnailHeap,
-                                     thumbfd,
-                                     (uint8_t *)mRawHeap->mHeap->base(),
-                                     mRawHeap->mHeap->getHeapID(),
+                                     (uint8_t *)mJpegMapped->data, //FIXME: thumbnail buffer
+                                     mJpegfd,                      //FIXME: thumbnail fd
+                                     (uint8_t *)mRawMapped->data,  //FIXME: snapshot buffer
+                                     mRawfd,                       //FIXME: snapshot fd
                                      &mCrop, exif_data, exif_table_numEntries,
                                      jpegPadding/2, -1)) {
             ALOGE("native_jpeg_encode: jpeg_encoder_encode failed.");
