@@ -6013,10 +6013,9 @@ void QualcommCameraHardware::receiveJpegPictureFragment(
     uint8_t *buff_ptr, uint32_t buff_size)
 {
     ALOGV("receiveJpegPictureFragment size %d", buff_size);
-    uint32_t remaining = mJpegHeap->mHeap->virtualSize();
+    uint32_t remaining = mJpegMapped->size;
     remaining -= mJpegSize;
-    uint8_t *base = (uint8_t *)/*mJpegHeap->mHeap->base()*/mJpegMapped->data;
-
+    uint8_t *base = (uint8_t *)mJpegMapped->data;
     if (buff_size > remaining) {
         ALOGE("receiveJpegPictureFragment: size %d exceeds what "
              "remains in JPEG heap (%d), truncating",
