@@ -4903,7 +4903,6 @@ void QualcommCameraHardware::receiveLiveSnapshot(uint32_t jpeg_size)
 void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
 {
     status_t retVal = NO_ERROR;
-    android_native_buffer_t *buffer;
     buffer_handle_t *handle = NULL;
     int bufferIndex = 0;
 
@@ -5122,7 +5121,7 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
             mDisplayLock.lock();
             ALOGV(" error Cancelling preview buffers  ");
             retVal = mPreviewWindow->cancel_buffer(mPreviewWindow,
-                  &(buffer->handle));
+                  handle);
             if(retVal != NO_ERROR)
                 ALOGE("%s:  cancelBuffer failed for buffer", __FUNCTION__);
             mDisplayLock.unlock();
