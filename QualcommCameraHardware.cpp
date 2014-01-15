@@ -3215,14 +3215,6 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     int yOffsetThumb = 0;
     if (initJpegHeap) {
         ALOGE("sravnak initraw 16");
-#ifdef USE_ION
-        int cnt = 0;
-        if (allocate_ion_memory(&Jpeg_main_ion_fd[cnt], &Jpeg_alloc[cnt], &Jpeg_ion_info_fd[cnt],
-                                    ion_heap, mJpegMaxSize, &mJpegfd/*[cnt]*/) < 0){
-            ALOGE("do_mmap: Open device %s failed!\n",pmem_region);
-            return NULL;
-        }
-#endif
         mJpegMapped=mGetMemory(-1,mJpegMaxSize,kJpegBufferCount,mCallbackCookie);
         if (mJpegMapped==NULL) {
             ALOGE("Failed to get camera memory for jpeg heap");
@@ -3330,10 +3322,6 @@ void QualcommCameraHardware::deinitRaw()
     if(NULL != mJpegMapped) {
         mJpegMapped->release(mJpegMapped);
         mJpegMapped = NULL;
-#ifdef USE_ION
-        int cnt = 0;
-        deallocate_ion_memory(&Jpeg_main_ion_fd[cnt], &Jpeg_ion_info_fd[cnt]);
-#endif
     }
 #if 0
     mJpegHeap.clear();
