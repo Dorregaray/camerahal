@@ -3988,13 +3988,18 @@ void QualcommCameraHardware::stopPreview()
         if (mDataCallbackTimestamp && (mMsgEnabled & CAMERA_MSG_VIDEO_FRAME))
             return;
     }
-    if( mSnapshotThreadRunning ) {
-        ALOGV("In stopPreview during snapshot");
-        return;
+    // wait if snapshot is in progress
+    mSnapshotThreadWaitLock.lock();
+    while (mSnapshotThreadRunning) {
+        ALOGI("stoppreview: waiting for old snapshot thread to complete.");
+        mSnapshotThreadWait.wait(mSnapshotThreadWaitLock);
+        ALOGI("stoppreview: old snapshot thread completed. proceed stoppreview");
     }
+    mSnapshotThreadWaitLock.unlock();
+
     if( mPreviewWindow != NULL ) {
         private_handle_t *handle;
-        if(mThumbnailBuffer) {
+        if(mPreviewWindow != NULL && mThumbnailBuffer != NULL) {
             handle = (private_handle_t *)(*mThumbnailBuffer);
             ALOGE("%s:  Cancelling postview buffer %d ", __FUNCTION__, handle->fd);
             mDisplayLock.lock();
@@ -4012,6 +4017,7 @@ void QualcommCameraHardware::stopPreview()
                     __FUNCTION__, handle->fd);
             mDisplayLock.unlock();
             mThumbnailBuffer = NULL;
+            mThumbnailMapped = NULL;
         }
     }
     stopPreviewInternal();
@@ -6039,6 +6045,7 @@ bool QualcommCameraHardware::receiveRawPicture()
                 }
             }
             mThumbnailBuffer = NULL;
+            mThumbnailMapped = NULL;
         }
 
         if (mDataCallback && (mMsgEnabled & CAMERA_MSG_RAW_IMAGE))
