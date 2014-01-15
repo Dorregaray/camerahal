@@ -1112,6 +1112,14 @@ QualcommCameraHardware::QualcommCameraHardware()
 
     storeTargetType();
 
+    mRawMapped = NULL;
+    mJpegMapped = NULL;
+    mThumbnailMapped = NULL;
+    mJpegCopyMapped = NULL;
+    for(int i=0; i< RECORD_BUFFERS; i++) {
+        mRecordMapped[i] = NULL;
+    }
+
     if( (pthread_create(&mDeviceOpenThread, NULL, openCamera, NULL)) != 0) {
         ALOGE(" openCamera thread creation failed ");
     }
@@ -3321,6 +3329,10 @@ void QualcommCameraHardware::deinitRaw()
         deallocate_ion_memory(&raw_main_ion_fd[cnt], &raw_ion_info_fd[cnt]);
 #endif
     }
+    if(NULL != mJpegCopyMapped) {
+        mJpegCopyMapped->release(mJpegCopyMapped);
+        mJpegCopyMapped = NULL;
+    }
     if(NULL != mJpegMapped) {
         mJpegMapped->release(mJpegMapped);
         close(mJpegfd);
@@ -5372,7 +5384,6 @@ bool QualcommCameraHardware::initRecord()
 #endif
         ALOGE("%s  Record fd is %d ", __func__, mRecordfd[cnt]);
         mRecordMapped[cnt]=mGetMemory(mRecordfd[cnt], mRecordFrameSize,1,mCallbackCookie);
-        ALOGE("sravnak initrecord 14");
         if(mRecordMapped==NULL) {
             ALOGE("Failed to get camera memory for mRecordMapped heap");
         }else{
@@ -6124,20 +6135,18 @@ void QualcommCameraHardware::receiveJpegPicture(void)
         mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, buffer, mCallbackCookie);
         buffer = NULL;
 #endif
-#if 0
         ALOGE("receiveJpegPicture : giving jpeg image callback to services");
-        mJpegCopyMapped = mGetMemory(-1, encoded_buffer->filled_size,1, mCallbackCookie);
+        mJpegCopyMapped = mGetMemory(-1, mJpegSize, 1, mCallbackCookie);
         if(!mJpegCopyMapped){
           ALOGE("%s: mGetMemory failed.\n", __func__);
         }
-        memcpy(mJpegCopyMapped->data, mJpegMapped[index]->data, encoded_buffer->filled_size );
+        memcpy(mJpegCopyMapped->data, mJpegMapped->data, mJpegSize);
         mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE,mJpegCopyMapped,data_counter,NULL,mCallbackCookie);
-         if(NULL != mJpegCopyMapped) {
+
+        if(NULL != mJpegCopyMapped) {
            mJpegCopyMapped->release(mJpegCopyMapped);
            mJpegCopyMapped = NULL;
         }
-#endif
-        mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, mJpegMapped, data_counter, NULL, mCallbackCookie);
     }
     else ALOGV("JPEG callback was cancelled--not delivering image.");
 

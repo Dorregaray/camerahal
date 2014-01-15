@@ -612,6 +612,7 @@ private:
     camera_memory_t *mJpegMapped;
     camera_memory_t *mRawSnapShotMapped;
     camera_memory_t *mRecordMapped[9];
+    camera_memory_t *mJpegCopyMapped;
     int raw_main_ion_fd[MAX_SNAPSHOT_BUFFERS];
     int Jpeg_main_ion_fd[MAX_SNAPSHOT_BUFFERS];
     int record_main_ion_fd[9];
