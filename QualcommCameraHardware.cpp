@@ -1073,6 +1073,7 @@ QualcommCameraHardware::QualcommCameraHardware()
       mPreviewFrameSize(0),
       mRawSize(0),
       mCbCrOffsetRaw(0),
+      mYOffset(0),
       mAutoFocusThreadRunning(false),
       mInitialized(false),
       mBrightness(0),
@@ -3046,7 +3047,6 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
 
     //For offline jpeg hw encoder, jpeg encoder will provide us the
     //required offsets and buffer size depending on the rotation.
-    int yOffset = 0;
     if( (mCurrentTarget == TARGET_MSM7630) || (mCurrentTarget == TARGET_MSM7627) || (mCurrentTarget == TARGET_MSM8660)) {
         int rotation = mParameters.getInt("rotation");
         if (rotation >= 0) {
@@ -3059,12 +3059,12 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
         //Don't call the get_buffer_offset() for ADRENO, as the width and height
         //for Adreno format will be of CEILING32.
         if(mPreviewFormat != CAMERA_YUV_420_NV21_ADRENO) {
-            LINK_jpeg_encoder_get_buffer_offset(rawWidth, rawHeight, (uint32_t *)&yOffset,
+            LINK_jpeg_encoder_get_buffer_offset(rawWidth, rawHeight, (uint32_t *)&mYOffset,
                                             (uint32_t *)&mCbCrOffsetRaw, (uint32_t *)&mRawSize);
             mJpegMaxSize = mRawSize;
         }
         ALOGV("initRaw: yOffset = %d, mCbCrOffsetRaw = %d, mRawSize = %d",
-                     yOffset, mCbCrOffsetRaw, mRawSize);
+                     mYOffset, mCbCrOffsetRaw, mRawSize);
     }
     if((mPreviewWindow != NULL) && (mThumbnailBuffer != NULL)) {
         mDisplayLock.lock();
@@ -3098,7 +3098,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
         mRawSize = buf_info.size;
         mJpegMaxSize = mRawSize;
         mCbCrOffsetRaw = buf_info.cbcr_offset;
-        yOffset = buf_info.yoffset;
+        mYOffset = buf_info.yoffset;
     }*/
     mParameters.getPreviewSize(&previewWidth, &previewHeight);
     int mBufferSize = previewWidth * previewHeight * 3/2;
@@ -3156,7 +3156,9 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
         mRawMapped->data ,mRawMapped->handle, mRawMapped->size, mRawMapped->release);
     }
     register_buf(mJpegMaxSize,
-                mRawSize,mCbCrOffsetRaw,yOffset,
+                mRawSize,
+                mCbCrOffsetRaw,
+                mYOffset,
                 mRawfd,0,
                 (uint8_t *)mRawMapped->data,
                 MSM_PMEM_MAINIMG,
@@ -3302,7 +3304,9 @@ void QualcommCameraHardware::deinitRaw()
     if(NULL != mRawMapped) {
         ALOGE("Unregister MAIN_IMG");
         register_buf(mJpegMaxSize,
-                mRawSize,mCbCrOffsetRaw,0,
+                mRawSize,
+                mCbCrOffsetRaw,
+                mYOffset,
                 mRawfd,0,
                 (uint8_t *)mRawMapped->data,
                 MSM_PMEM_MAINIMG,
