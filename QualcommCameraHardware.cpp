@@ -3222,14 +3222,8 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
             ALOGE("do_mmap: Open device %s failed!\n",pmem_region);
             return NULL;
         }
-#else
-        mJpegfd = open(pmem_region, O_RDWR|O_SYNC);
-        if (mJpegfd <= 0) {
-            ALOGE("do_mmap: Open device %s failed!\n",pmem_region);
-            return false;
-        }
 #endif
-        mJpegMapped=mGetMemory(mJpegfd,mJpegMaxSize,kJpegBufferCount,mCallbackCookie);
+        mJpegMapped=mGetMemory(-1,mJpegMaxSize,kJpegBufferCount,mCallbackCookie);
         if (mJpegMapped==NULL) {
             ALOGE("Failed to get camera memory for jpeg heap");
             return false;
@@ -3335,7 +3329,6 @@ void QualcommCameraHardware::deinitRaw()
     }
     if(NULL != mJpegMapped) {
         mJpegMapped->release(mJpegMapped);
-        close(mJpegfd);
         mJpegMapped = NULL;
 #ifdef USE_ION
         int cnt = 0;
