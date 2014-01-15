@@ -4869,29 +4869,34 @@ void QualcommCameraHardware::receiveLiveSnapshot(uint32_t jpeg_size)
     }
     else
     {
-        write(file_fd, (uint8_t *)/*mJpegHeap->mHeap->base()*/mJpegMapped->data,jpeg_size);
+        write(file_fd, (uint8_t *)mJpegMapped->data,jpeg_size);
     }
     close(file_fd);
 #endif
-#if 0
+
     Mutex::Autolock cbLock(&mCallbackLock);
     if (mDataCallback && (mMsgEnabled & MEDIA_RECORDER_MSG_COMPRESSED_IMAGE)) {
+#if 0
         sp<MemoryBase> buffer = new
             MemoryBase(mJpegHeap->mHeap,
                        0,
                        jpeg_size);
         mDataCallback(MEDIA_RECORDER_MSG_COMPRESSED_IMAGE, buffer, mCallbackCookie);
         buffer = NULL;
+#endif
+        mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, mJpegMapped ,data_counter,
+                          NULL, mCallbackCookie);
     }
     else ALOGV("JPEG callback was cancelled--not delivering image.");
 
     //Reset the Gps Information & relieve memory
     exif_table_numEntries = 0;
+#if 0
     mJpegHeap.clear();
     mJpegHeap = NULL;
-
-    liveshot_state = LIVESHOT_DONE;
 #endif
+    liveshot_state = LIVESHOT_DONE;
+
     ALOGV("receiveLiveSnapshot X");
 }
 
