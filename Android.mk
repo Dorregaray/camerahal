@@ -26,10 +26,11 @@ LOCAL_C_INCLUDES := $(TOP)/frameworks/base/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-camera
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-still/jpeg
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-legacy/libgralloc
+LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-legacy/libgralloc \
+                    $(TOP)/hardware/qcom/display-legacy/libgenlock
 
 LOCAL_SHARED_LIBRARIES := libutils libui libcamera_client liblog libcutils
-LOCAL_SHARED_LIBRARIES += libbinder libdl libhardware
+LOCAL_SHARED_LIBRARIES += libgenlock libbinder libdl libhardware
 
 ifeq ($(BOARD_DEBUG_MEMLEAKS),true)
     LOCAL_SHARED_LIBRARIES += libheaptracker
