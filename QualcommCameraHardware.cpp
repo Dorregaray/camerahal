@@ -3315,10 +3315,6 @@ void QualcommCameraHardware::deinitRaw()
         deallocate_ion_memory(&raw_main_ion_fd[cnt], &raw_ion_info_fd[cnt]);
 #endif
     }
-    if(NULL != mJpegCopyMapped) {
-        mJpegCopyMapped->release(mJpegCopyMapped);
-        mJpegCopyMapped = NULL;
-    }
     if(NULL != mJpegMapped) {
         mJpegMapped->release(mJpegMapped);
         mJpegMapped = NULL;
@@ -6129,7 +6125,6 @@ void QualcommCameraHardware::receiveJpegPicture(void)
         }
         memcpy(mJpegCopyMapped->data, mJpegMapped->data, mJpegSize);
         mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE,mJpegCopyMapped,data_counter,NULL,mCallbackCookie);
-
         if(NULL != mJpegCopyMapped) {
            mJpegCopyMapped->release(mJpegCopyMapped);
            mJpegCopyMapped = NULL;
