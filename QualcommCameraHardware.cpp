@@ -3569,12 +3569,6 @@ status_t QualcommCameraHardware::getBuffersAndStartPreview() {
                    __FUNCTION__, retVal);
             return retVal;
         }
-        if (GENLOCK_NO_ERROR != genlock_lock_buffer(handle, GENLOCK_WRITE_LOCK,
-                                                    GENLOCK_MAX_TIMEOUT)) {
-            ALOGE("%s: locking thumbnail buffer failed", __FUNCTION__);
-            return -EINVAL;
-        }
-        mThumbnailLockState = BUFFER_LOCKED;
 
         // Cancel minUndequeuedBufs.
         for (cnt = kPreviewBufferCount; cnt < mTotalPreviewBufferCount; cnt++) {
