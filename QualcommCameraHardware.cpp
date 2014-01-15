@@ -6054,6 +6054,20 @@ void QualcommCameraHardware::receiveJpegPicture(void)
         mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, buffer, mCallbackCookie);
         buffer = NULL;
 #endif
+#if 0
+        ALOGE("receiveJpegPicture : giving jpeg image callback to services");
+        mJpegCopyMapped = mGetMemory(-1, encoded_buffer->filled_size,1, mCallbackCookie);
+        if(!mJpegCopyMapped){
+          ALOGE("%s: mGetMemory failed.\n", __func__);
+        }
+        memcpy(mJpegCopyMapped->data, mJpegMapped[index]->data, encoded_buffer->filled_size );
+        mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE,mJpegCopyMapped,data_counter,NULL,mCallbackCookie);
+         if(NULL != mJpegCopyMapped) {
+           mJpegCopyMapped->release(mJpegCopyMapped);
+           mJpegCopyMapped = NULL;
+        }
+#endif
+        mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, mJpegMapped, data_counter, NULL, mCallbackCookie);
     }
     else ALOGV("JPEG callback was cancelled--not delivering image.");
 
