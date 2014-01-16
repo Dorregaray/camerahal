@@ -2148,10 +2148,10 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         mCrop.in1_h = mDimension.orig_picture_dy - jpegPadding; // when cropping is enabled
 
         if (!LINK_jpeg_encoder_encode(&mDimension,
-                                      (uint8_t *)mJpegMapped->data, //FIXME: thumbnail buffer
-                                      mJpegfd,                      //FIXME: thumbnail fd
-                                      (uint8_t *)mRawMapped->data,  //FIXME: snapshot buffer
-                                      mRawfd,                       //FIXME: snapshot fd
+                                      (uint8_t *)mThumbnailMapped,  //FIXME: thumbnail buffer
+                                      mThumbnailfd,                 //FIXME: thumbnail fd
+                                      (uint8_t *)mJpegMapped->data, //FIXME: snapshot buffer
+                                      mJpegfd,                      //FIXME: snapshot fd
                                       &mCrop, exif_data, exif_table_numEntries,
                                       jpegPadding/2, CbCrOffset)) {
             ALOGE("native_jpeg_encode: jpeg_encoder_encode failed.");
@@ -2159,10 +2159,10 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         }
     } else {
         if (!LINK_jpeg_encoder_encode(&mDimension,
-                                     (uint8_t *)mJpegMapped->data, //FIXME: thumbnail buffer
-                                     mJpegfd,                      //FIXME: thumbnail fd
-                                     (uint8_t *)mRawMapped->data,  //FIXME: snapshot buffer
-                                     mRawfd,                       //FIXME: snapshot fd
+                                     (uint8_t *)mThumbnailMapped,  //FIXME: thumbnail buffer
+                                     mThumbnailfd,                 //FIXME: thumbnail fd
+                                     (uint8_t *)mJpegMapped->data, //FIXME: snapshot buffer
+                                     mJpegfd,                      //FIXME: snapshot fd
                                      &mCrop, exif_data, exif_table_numEntries,
                                      jpegPadding/2, -1)) {
             ALOGE("native_jpeg_encode: jpeg_encoder_encode failed.");
@@ -3106,6 +3106,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     private_handle_t *thumbnailHandle;
     if(mThumbnailBuffer) {
         thumbnailHandle = (private_handle_t *)(*mThumbnailBuffer);
+        mThumbnailfd = thumbnailHandle->fd;
         ALOGV("fd thumbnailhandle fd %d size %d", thumbnailHandle->fd, thumbnailHandle->size);
         mThumbnailMapped= (unsigned int) mmap(0, thumbnailHandle->size, PROT_READ|PROT_WRITE,
             MAP_SHARED, thumbnailHandle->fd, 0);

@@ -608,6 +608,7 @@ private:
     int mRawfd;
     int mJpegfd;
     int mRecordfd[9];
+    int mThumbnailfd;
     camera_memory_t *mPreviewMapped[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
     camera_memory_t *mRawMapped;
     camera_memory_t *mJpegMapped;
