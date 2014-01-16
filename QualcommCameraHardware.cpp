@@ -6098,8 +6098,8 @@ void QualcommCameraHardware::receiveJpegPictureFragment(
 
 void QualcommCameraHardware::receiveJpegPicture(void)
 {
-    ALOGV("receiveJpegPicture: E image (%d uint8_ts out of %d)",
-         mJpegSize, mJpegHeap->mBufferSize);
+    ALOGE("receiveJpegPicture: E image (%d uint8_ts out of %d)",
+         mJpegSize, mJpegMapped->size);
     Mutex::Autolock cbLock(&mCallbackLock);
 
     int index = 0;
