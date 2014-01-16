@@ -5864,7 +5864,7 @@ static void crop_yuv420(uint32_t width, uint32_t height,
 }
 
 bool QualcommCameraHardware::receiveRawSnapshot(){
-    ALOGV("receiveRawSnapshot E");
+    ALOGE("receiveRawSnapshot E");
 
     Mutex::Autolock cbLock(&mCallbackLock);
     /* Issue notifyShutter with mPlayShutterSoundOnly as TRUE */
@@ -5884,15 +5884,15 @@ bool QualcommCameraHardware::receiveRawSnapshot(){
          */
         notifyShutter(&mCrop, FALSE);
 
-//        if (mDataCallback && (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE))
-//           mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, mRawSnapShotPmemHeap->mBuffers[0],
-//                data_counter, mCallbackCookie);
+        if (mDataCallback && (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE))
+           mDataCallback(CAMERA_MSG_COMPRESSED_IMAGE, mRawMapped,
+                data_counter, NULL, mCallbackCookie);
     }
 
     //cleanup
     deinitRawSnapshot();
 
-    ALOGV("receiveRawSnapshot X");
+    ALOGE("receiveRawSnapshot X");
     return true;
 }
 
