@@ -435,8 +435,8 @@ void set_callbacks(struct camera_device * device,
       } else {
         cam_dt_timestamp_cb = NULL;
       }
-      #endif
       ALOGE("cam_nt_cb =%p,cam_dt_cb=%p,cam_dt_timestamp_cb=%p",  cam_nt_cb, cam_dt_cb, cam_dt_timestamp_cb);
+      #endif
       hardware->setCallbacks(notify_cb,data_cb,data_cb_timestamp,get_memory, user);
     }
   }
