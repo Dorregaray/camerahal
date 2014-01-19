@@ -2267,6 +2267,13 @@ void QualcommCameraHardware::runFrameThread(void *data)
     mPmemWait.signal();
     mPmemWaitLock.unlock();
 #else
+    // Cancelling previewBuffers and returning them to display before stopping preview
+    // This will ensure that all preview buffers are available for dequeing when
+    //startPreview is called again with the same ANativeWindow object (snapshot case). If the
+    //ANativeWindow is a new one(camera-camcorder switch case) because the app passed a new
+    //surface then buffers will be re-allocated and not returned from the old pool.
+    relinquishBuffers();
+
     {
         int mBufferSize = previewWidth * previewHeight * 3/2;
         int mCbCrOffset = PAD_TO_WORD(previewWidth * previewHeight);
@@ -3265,6 +3272,47 @@ void QualcommCameraHardware::deinitRaw()
     if(NULL != mJpegMapped) {
         mJpegMapped->release(mJpegMapped);
         mJpegMapped = NULL;
+    }
+    if( mPreviewWindow != NULL ) {
+        ALOGE("deinitRaw , clearing/cancelling thumbnail buffers:");
+        private_handle_t *handle;
+        if(mPreviewWindow != NULL && mThumbnailBuffer != NULL) {
+            handle = (private_handle_t *)(*mThumbnailBuffer);
+            ALOGE("%s:  Cancelling postview buffer %d ", __FUNCTION__, handle->fd);
+            //ALOGE("deinitraw : display lock");
+            mDisplayLock.lock();
+            if (BUFFER_LOCKED == mThumbnailLockState) {
+                if (GENLOCK_FAILURE == genlock_unlock_buffer(handle)) {
+                   ALOGE("%s: genlock_unlock_buffer failed", __FUNCTION__);
+                } else {
+                   mThumbnailLockState = BUFFER_UNLOCKED;
+                }
+            }
+            status_t retVal = mPreviewWindow->cancel_buffer(mPreviewWindow,
+                                                              mThumbnailBuffer);
+            if(retVal != NO_ERROR)
+                ALOGE("%s: cancelBuffer failed for postview buffer %d",
+                                                     __FUNCTION__, handle->fd);
+            int mBufferSize = previewWidth * previewHeight * 3/2;
+            int mCbCrOffset = PAD_TO_WORD(previewWidth * previewHeight);
+            if(mThumbnailMapped) {
+                ALOGE("%s:  Unregistering Thumbnail Buffer %d ", __FUNCTION__, handle->fd);
+                register_buf(mBufferSize,
+                    mBufferSize, mCbCrOffset, 0,
+                    handle->fd,
+                    0,
+                    (uint8_t *)mThumbnailMapped,
+                    MSM_PMEM_THUMBNAIL,
+                    false, false);
+                 if (munmap((void *)(mThumbnailMapped),handle->size ) == -1) {
+                    ALOGE("deinitraw : Error un-mmapping the thumbnail buffer");
+                 }
+                 mThumbnailBuffer = NULL;
+                 mThumbnailMapped = 0;
+            }
+            ALOGE("deinitraw : display unlock");
+            mDisplayLock.unlock();
+        }
     }
     ALOGV("deinitRaw X");
 }
