@@ -3518,7 +3518,7 @@ status_t QualcommCameraHardware::getBuffersAndStartPreview() {
                              0,
                              (uint8_t *)frames[cnt].buffer/*(uint8_t *)mThumbnailMapped*/,
                              MSM_PMEM_PREVIEW,
-                             active);
+                             active,true);
                     ALOGE("Came back from register call to kernel");
                 } else
                     ALOGE("%s: setPreviewWindow: Could not get buffer handle", __FUNCTION__);
@@ -5257,13 +5257,12 @@ bool QualcommCameraHardware::initRecord()
             type = MSM_PMEM_VIDEO_VPE;
             active = 1;
         }
-        ALOGE("Registering buffer %d with kernel",cnt);
+        ALOGE("Registering buffer %d with kernel", cnt);
         register_buf(mRecordFrameSize,
                             mRecordFrameSize, CbCrOffset, 0,
                             recordframes[cnt].fd,
                             0,
                             (uint8_t *)recordframes[cnt].buffer,
-                            MSM_PMEM_VIDEO,
                             type,
                             active);
         ALOGE("Came back from register call to kernel");
@@ -7156,7 +7155,7 @@ QualcommCameraHardware::PmemPool::PmemPool(const char *pmem_pool,
                          mAlignedBufferSize * cnt,
                          (uint8_t *)mHeap->base() + mAlignedBufferSize * cnt,
                          pmem_type,
-                         active);
+                         active, true);
             }
         }
 
