@@ -4976,7 +4976,7 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
 
         if( (mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250) && (mCurrentTarget != TARGET_MSM8660)) {
             if(rcb != NULL && (msgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
-                rcb(systemTime(), CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex], 0, rdata);
+                rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex], 0, rdata);
                 Mutex::Autolock rLock(&mRecordFrameLock);
                 if (mReleasedRecordingFrame != true) {
                     ALOGV("block waiting for frame release");
