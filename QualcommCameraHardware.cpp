@@ -3111,7 +3111,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
                 0,
                 (uint8_t *)mThumbnailMapped,
                 MSM_PMEM_THUMBNAIL,
-                1);
+                true, true);
     }
 
     ALOGV("initRaw: initializing mRawHeap.");
@@ -3150,7 +3150,7 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
                 mRawfd,0,
                 (uint8_t *)mRawMapped->data,
                 MSM_PMEM_MAINIMG,
-                1);
+                true, true);
 
     //This is kind of workaround for the GPU limitation, as it can't
     //output in line to correct NV21 adreno formula for some snapshot
@@ -3259,7 +3259,7 @@ void QualcommCameraHardware::deinitRaw()
                 mRawfd,0,
                 (uint8_t *)mRawMapped->data,
                 MSM_PMEM_MAINIMG,
-                0, 0);
+                false, false);
         mRawMapped->release(mRawMapped);
         close(mRawfd);
         mRawMapped = NULL;
@@ -5259,7 +5259,7 @@ bool QualcommCameraHardware::initRecord()
                             0,
                             (uint8_t *)recordframes[cnt].buffer,
                             type,
-                            active);
+                            active, true);
         ALOGE("Came back from register call to kernel");
     }
 
@@ -7267,7 +7267,7 @@ QualcommCameraHardware::IonPool::IonPool(int ion_heap_id, int flags,
                          mAlignedBufferSize * cnt,
                          (uint8_t *)mHeap->base() + mAlignedBufferSize * cnt,
                          ion_type,
-                         active);
+                         active, true);
             }
         }
 
