@@ -2596,8 +2596,8 @@ int QualcommCameraHardware::deallocate_ion_memory(int *main_ion_fd, struct ion_f
 bool QualcommCameraHardware::initPreview()
 {
     ALOGV("%s E", __FUNCTION__);
-    const char * pmem_region;
-    int ion_heap;
+    const char * pmem_region = "/dev/pmem_adsp";
+    int ion_heap = ION_CAMERA_HEAP_ID;
 
     mParameters.getPreviewSize(&previewWidth, &previewHeight);
     ALOGV("initPreview: Got preview dimension as %d x %d ", previewWidth, previewHeight);
@@ -2676,12 +2676,6 @@ bool QualcommCameraHardware::initPreview()
     }
     mInSnapshotModeWaitLock.unlock();
 
-    /* Temporary migrating the preview buffers to smi pool for 8x60 till the bug is resolved in the pmem_adsp pool */
-    if(mCurrentTarget == TARGET_MSM8660)
-        pmem_region = "/dev/pmem_smipool";
-    else
-        pmem_region = "/dev/pmem_adsp";
-    ion_heap = ION_CAMERA_HEAP_ID;
 
     int cnt = 0;
 
@@ -2851,7 +2845,7 @@ void QualcommCameraHardware::deinitPreview(void)
 bool QualcommCameraHardware::initRawSnapshot()
 {
     ALOGV("initRawSnapshot E");
-    const char * pmem_region;
+    const char * pmem_region = "/dev/pmem_adsp";
     int ion_heap = ION_CP_MM_HEAP_ID;
 
     //get width and height from Dimension Object
@@ -2874,11 +2868,6 @@ bool QualcommCameraHardware::initRawSnapshot()
         ALOGV("initRawSnapshot: clearing old mRawSnapShotPmemHeap.");
         mRawSnapShotPmemHeap.clear();
     }
-
-    if(mCurrentTarget == TARGET_MSM8660)
-       pmem_region = "/dev/pmem_smipool";
-    else
-       pmem_region = "/dev/pmem_adsp";
 
     //Pmem based pool for Camera Driver
 #if 0
@@ -2917,7 +2906,7 @@ bool QualcommCameraHardware::initRawSnapshot()
 bool QualcommCameraHardware::initRaw(bool initJpegHeap)
 {
     int rawWidth, rawHeight;
-    const char * pmem_region;
+    const char * pmem_region = "/dev/pmem_adsp";
     int ion_heap = ION_CP_MM_HEAP_ID;
 
     ALOGV("%s E", __FUNCTION__);
@@ -3115,10 +3104,6 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     }
 
     ALOGV("initRaw: initializing mRawHeap.");
-    if(mCurrentTarget == TARGET_MSM8660)
-       pmem_region = "/dev/pmem_smipool";
-    else
-       pmem_region = "/dev/pmem_adsp";
 #ifdef USE_ION
     unsigned cnt = 0;
     if (allocate_ion_memory(&raw_main_ion_fd[cnt], &raw_alloc[cnt], &raw_ion_info_fd[cnt],
@@ -3191,7 +3176,6 @@ bool QualcommCameraHardware::initRaw(bool initJpegHeap)
     }
 
     //PostView
-    pmem_region = "/dev/pmem_adsp";
     ion_heap = ION_CAMERA_HEAP_ID;
 #if 0
     if (mThumbnailHeap != NULL)
@@ -5096,10 +5080,10 @@ void QualcommCameraHardware::receiveCameraStats(camstats_type stype, camera_prev
 uint8_t *mm_camera_do_mmap(uint32_t size, int *pmemFd)
 {
     void *ret; /* returned virtual address */
-    int  pmem_fd = open("/dev/pmem_smipool", O_RDWR|O_SYNC);
+    int  pmem_fd = open("/dev/pmem_adsp", O_RDWR|O_SYNC);
 
     if (pmem_fd <= 0) {
-        ALOGE("do_mmap: Open device /dev/pmem_smipool failed!\n");
+        ALOGE("do_mmap: Open device /dev/pmem_adsp failed!\n");
         return NULL;
     }
     /* to make it page size aligned */
@@ -5123,18 +5107,13 @@ uint8_t *mm_camera_do_mmap(uint32_t size, int *pmemFd)
 
 bool QualcommCameraHardware::initRecord()
 {
-    const char *pmem_region;
+    const char *pmem_region = "/dev/pmem_adsp";
     int ion_heap = ION_CP_MM_HEAP_ID;
     int CbCrOffset;
     int recordBufferSize;
     int active, type =0;
 
     ALOGV("initRecord E");
-
-    if(mCurrentTarget == TARGET_MSM8660)
-        pmem_region = "/dev/pmem_smipool";
-    else
-        pmem_region = "/dev/pmem_adsp";
 
     ALOGI("initRecord: mDimension.video_width = %d mDimension.video_height = %d",
              mDimension.video_width, mDimension.video_height);
@@ -5199,11 +5178,7 @@ bool QualcommCameraHardware::initRecord()
         return false;
     }
 #endif
-#if 1
     ALOGV("initRecord: Allocating Record buffers");
-    pmem_region = "/dev/pmem_adsp";
-#endif
-
     for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
 #if 0
         //recordframes[cnt].fd = mRecordHeap->mHeap->getHeapID();
