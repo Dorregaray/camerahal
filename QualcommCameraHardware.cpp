@@ -4930,20 +4930,20 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
                 retVal = mPreviewWindow->enqueue_buffer(mPreviewWindow,
                                             frame_buffer[bufferIndex].buffer);
                 //ALOGE(" enQ preview buffers %d ",frame_buffer[bufferIndex].frame->fd);
-           //  if( retVal != NO_ERROR)
-               //LOGE("%s: Failed while queueing buffer %d for display."
-                //   " Error = %d", __FUNCTION__,
-               //    mPreviewHeap[bufferIndex]->mFD, retVal);
+                if( retVal != NO_ERROR)
+                    ALOGE("%s: Failed while queueing buffer %d for display."
+                        " Error = %d", __FUNCTION__,
+                        frame_buffer[bufferIndex].frame->fd, retVal);
                 int stride;
                 retVal = mPreviewWindow->dequeue_buffer(mPreviewWindow,
                                          &(handle),
                                          &(stride));
-                private_handle_t *bhandle = (private_handle_t *)(*handle);
-                //ALOGE(" deQ preview buffers %d ",bhandle->fd);
                 if (retVal != NO_ERROR) {
                     ALOGE("%s: Failed while dequeueing buffer from display."
                         " Error = %d", __FUNCTION__, retVal);
                 } else {
+                    //private_handle_t *bhandle = (private_handle_t *)(*handle);
+                    //ALOGE(" deQ preview buffers %d ",bhandle->fd);
                     retVal = mPreviewWindow->lock_buffer(mPreviewWindow,handle);
                     //yyan todo use handle to find out buffer
                     if(retVal != NO_ERROR)
@@ -5026,10 +5026,12 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
 
             mDisplayLock.lock();
             ALOGV(" error Cancelling preview buffers  ");
-            retVal = mPreviewWindow->cancel_buffer(mPreviewWindow,
-                  handle);
-            if(retVal != NO_ERROR)
-                ALOGE("%s:  cancelBuffer failed for buffer", __FUNCTION__);
+            if (handle) {
+                retVal = mPreviewWindow->cancel_buffer(mPreviewWindow,
+                      handle);
+                if(retVal != NO_ERROR)
+                    ALOGE("%s:  cancelBuffer failed for buffer", __FUNCTION__);
+            }
             mDisplayLock.unlock();
         }
 
