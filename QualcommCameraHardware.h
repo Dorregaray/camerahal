@@ -395,48 +395,8 @@ private:
         sp<QualcommCameraHardware::MMCameraDL> mMMCameraDLRef;
     };
 
-    struct IonPool : public MemPool {
-        IonPool( int ion_heap_id, int flags, int ion_type,
-             int buffer_size, int num_buffers,
-             int frame_size, int cbcr_offset,
-             int yoffset, const char *name);
-        virtual ~IonPool();
-        int mFd;
-        int mIonType;
-        int mCbCrOffset;
-        int myOffset;
-        int mCameraControlFd;
-        uint32_t mAlignedSize;
-        sp<QualcommCameraHardware::MMCameraDL> mMMCameraDLRef;
-        static const char mIonDevName[];
-    };
-
-#ifdef USE_ION
-    //sp<IonPool> mPreviewHeap;
-    sp<IonPool> mRecordHeap;
-    sp<IonPool> mThumbnailHeap;
-    sp<IonPool> mRawHeap;
-    sp<IonPool> mDisplayHeap;
-    sp<AshmemPool> mJpegHeap;
     sp<AshmemPool> mStatHeap;
     sp<AshmemPool> mMetaDataHeap;
-    sp<IonPool> mRawSnapShotPmemHeap;
-    sp<IonPool> mPostViewHeap;
-    sp<PmemPool> mInitialPreviewHeap;
-#else
-    //sp<PmemPool> mPreviewHeap;
-    sp<PmemPool> mRecordHeap;
-    sp<PmemPool> mThumbnailHeap;
-    sp<PmemPool> mRawHeap;
-    sp<PmemPool> mDisplayHeap;
-    sp<AshmemPool> mJpegHeap;
-    sp<AshmemPool> mStatHeap;
-    sp<AshmemPool> mMetaDataHeap;
-    sp<PmemPool> mRawSnapShotPmemHeap;
-    sp<PmemPool> mPostViewHeap;
-    sp<PmemPool> mInitialPreviewHeap;
-#endif
-
     sp<MMCameraDL> mMMCameraDLRef;
 
     bool startCamera();
