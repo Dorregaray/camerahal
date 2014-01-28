@@ -2462,7 +2462,8 @@ void QualcommCameraHardware::runVideoThread(void *data)
           frameCnt++;
 #endif
             // Enable IF block to give frames to encoder , ELSE block for just simulation
-#if 1
+            // FIXME: the video thread stops receiving frames after 5th so until it gets solved using preview frames for recording
+#if 0
             ALOGV("in video_thread : got video frame, before if check giving frame to services/encoder");
             mCallbackLock.lock();
             int msgEnabled = mMsgEnabled;
@@ -2478,7 +2479,7 @@ void QualcommCameraHardware::runVideoThread(void *data)
             }
 #else
             // 720p output2  : simulate release frame here:
-            ALOGE("in video_thread simulation , releasing the video frame");
+            ALOGV("in video_thread simulation , releasing the video frame");
             LINK_camframe_free_video(vframe);
 #endif
 
@@ -4958,7 +4959,8 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
 
         nsecs_t timeStamp = nsecs_t(frame->ts.tv_sec)*1000000000LL + frame->ts.tv_nsec;
 
-        if( (mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250) && (mCurrentTarget != TARGET_MSM8660)) {
+//        FIXME: the video thread stops receiving frames after 5th so until it gets solved using preview frames for recording
+//        if( (mCurrentTarget != TARGET_MSM7630 ) &&  (mCurrentTarget != TARGET_QSD8250) && (mCurrentTarget != TARGET_MSM8660)) {
             if(rcb != NULL && (msgEnabled & CAMERA_MSG_VIDEO_FRAME)) {
                 rcb(timeStamp, CAMERA_MSG_VIDEO_FRAME, mPreviewMapped[bufferIndex], 0, rdata);
                 Mutex::Autolock rLock(&mRecordFrameLock);
@@ -4969,7 +4971,7 @@ void QualcommCameraHardware::receivePreviewFrame(struct msm_frame *frame)
                 }
                 mReleasedRecordingFrame = false;
             }
-        }
+//        }
 #if 0
         if ( mCurrentTarget == TARGET_MSM8660 ) {
             mMetaDataWaitLock.lock();
@@ -5335,6 +5337,7 @@ status_t QualcommCameraHardware::startRecording()
                 return status;
             }
         }
+#if 0
         if( ( mCurrentTarget == TARGET_MSM7630 ) || (mCurrentTarget == TARGET_QSD8250) || (mCurrentTarget == TARGET_MSM8660))  {
             ALOGV(" in startREcording : calling start_recording");
             native_start_ops(CAMERA_OPS_VIDEO_RECORDING, NULL);
@@ -5372,6 +5375,7 @@ status_t QualcommCameraHardware::startRecording()
             mVideoThreadWaitLock.unlock();
             // Remove the left out frames in busy Q and them in free Q.
         }
+#endif
     }
     return ret;
 }
