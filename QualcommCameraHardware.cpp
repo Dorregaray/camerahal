@@ -2363,7 +2363,6 @@ int QualcommCameraHardware::mapvideoBuffer(struct msm_frame *frame)
     for (int cnt = 0; cnt < kRecordBufferCount; cnt++) {
         if ((unsigned int)mRecordMapped[cnt]->data == (unsigned int)frame->buffer) {
             ret = cnt;
-            ALOGE("found match returning %d", ret);
             break;
         }
     }
