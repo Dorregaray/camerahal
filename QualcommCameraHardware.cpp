@@ -2137,10 +2137,10 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         mCrop.in1_h = mDimension.orig_picture_dy - jpegPadding; // when cropping is enabled
 
         if (!LINK_jpeg_encoder_encode(&mDimension,
-                                      (uint8_t *)mThumbnailMapped,  //FIXME: thumbnail buffer
-                                      mThumbnailfd,                 //FIXME: thumbnail fd
-                                      (uint8_t *)mJpegMapped->data, //FIXME: snapshot buffer
-                                      mJpegfd,                      //FIXME: snapshot fd
+                                      (uint8_t *)mThumbnailMapped,
+                                      mThumbnailfd,
+                                      (uint8_t *)mRawMapped->data,
+                                      mRawfd,
                                       &mCrop, exif_data, exif_table_numEntries,
                                       jpegPadding/2, CbCrOffset)) {
             ALOGE("native_jpeg_encode: jpeg_encoder_encode failed.");
@@ -2148,10 +2148,10 @@ bool QualcommCameraHardware::native_jpeg_encode(void)
         }
     } else {
         if (!LINK_jpeg_encoder_encode(&mDimension,
-                                     (uint8_t *)mThumbnailMapped,  //FIXME: thumbnail buffer
-                                     mThumbnailfd,                 //FIXME: thumbnail fd
-                                     (uint8_t *)mJpegMapped->data, //FIXME: snapshot buffer
-                                     mJpegfd,                      //FIXME: snapshot fd
+                                     (uint8_t *)mThumbnailMapped,
+                                     mThumbnailfd,
+                                     (uint8_t *)mRawMapped->data,
+                                     mRawfd,
                                      &mCrop, exif_data, exif_table_numEntries,
                                      jpegPadding/2, -1)) {
             ALOGE("native_jpeg_encode: jpeg_encoder_encode failed.");
