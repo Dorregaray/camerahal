@@ -4694,39 +4694,6 @@ void QualcommCameraHardware::receiveCameraStats(camstats_type stype, camera_prev
   //  ALOGV("receiveCameraStats X");
 }
 
-/*===========================================================================
- * FUNCTION    - do_mmap -
- *
- * DESCRIPTION:  retured virtual addresss
- *==========================================================================*/
-uint8_t *mm_camera_do_mmap(uint32_t size, int *pmemFd)
-{
-    void *ret; /* returned virtual address */
-    int  pmem_fd = open("/dev/pmem_adsp", O_RDWR|O_SYNC);
-
-    if (pmem_fd <= 0) {
-        ALOGE("do_mmap: Open device /dev/pmem_adsp failed!\n");
-        return NULL;
-    }
-    /* to make it page size aligned */
-    size = (size + 4095) & (~4095);
-    ret = mmap(NULL,
-                size,
-                PROT_READ  | PROT_WRITE,
-                MAP_SHARED,
-                pmem_fd,
-                0);
-    if (ret == MAP_FAILED) {
-        ALOGE("do_mmap: pmem mmap() failed: %s (%d)\n", strerror(errno), errno);
-        close(pmem_fd);
-        return NULL;
-    }
-    ALOGE("do_mmap: pmem mmap fd %d ptr %p len %u\n", pmem_fd, ret, size);
-    *pmemFd = pmem_fd;
-    return(uint8_t *)ret;
-}
-
-
 bool QualcommCameraHardware::initRecord()
 {
     const char *pmem_region = "/dev/pmem_adsp";
