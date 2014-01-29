@@ -89,6 +89,7 @@ typedef struct priv_camera_device {
     int cameraid;
     int preview_mode;
     int rotation;
+    int released;
 } priv_camera_device_t;
 
 
@@ -181,6 +182,9 @@ int camera_set_preview_window(struct camera_device * device,
         return -EINVAL;
 
     dev = (priv_camera_device_t*) device;
+
+    if (dev->released)
+        return -EINVAL;
 
     return gCameraHals[dev->cameraid]->set_PreviewWindow((void *)window);
 }
@@ -597,6 +601,7 @@ void camera_release(struct camera_device * device)
     dev = (priv_camera_device_t*) device;
 
     gCameraHals[dev->cameraid]->release();
+    dev->released = true;
     ALOGI("%s---", __FUNCTION__);
 }
 
@@ -634,7 +639,10 @@ int camera_device_close(hw_device_t* device)
     dev = (priv_camera_device_t*) device;
 
     if (dev) {
-        gCameraHals[dev->cameraid]->release();
+        if (!dev->released) {
+            gCameraHals[dev->cameraid]->release();
+            dev->released = true;
+        }
         gCameraHals[dev->cameraid] = NULL;
         gCamerasOpen--;
 
@@ -733,6 +741,7 @@ int camera_device_open(const hw_module_t* module, const char* name,
 
         priv_camera_device->preview_mode = read_mode_from_config("preview_mode");
         priv_camera_device->rotation = read_mode_from_config("rotation_mode");
+        priv_camera_device->released = false;
 
         camera_ops->set_preview_window = camera_set_preview_window;
         camera_ops->set_callbacks = camera_set_callbacks;
