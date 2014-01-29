@@ -3091,9 +3091,8 @@ status_t QualcommCameraHardware::setPreviewWindow(preview_stream_ops_t* window)
         ALOGW(" Setting NULL preview window ");
         /* Current preview window will be invalidated.
          * Release all the buffers back */
-        //@TODO: We may need to this to avoid leak
-        /*if(mPreviewWindow!=NULL)
-        relinquishBuffers();*/
+        if (mPreviewWindow != NULL)
+            relinquishBuffers();
     }
     ALOGE("Set preview window:: ");
     mDisplayLock.lock();
