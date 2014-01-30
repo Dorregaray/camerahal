@@ -26,8 +26,14 @@ LOCAL_C_INCLUDES := $(TOP)/frameworks/base/include
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-camera
 LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/mm-still/jpeg
 LOCAL_C_INCLUDES += $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include
-LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-legacy/libgralloc \
-                    $(TOP)/hardware/qcom/display-legacy/libgenlock
+
+ifneq ($(TARGET_QCOM_DISPLAY_VARIANT),,)
+LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display-$(TARGET_QCOM_DISPLAY_VARIANT)/libgralloc \
+                    $(TOP)/hardware/qcom/display-$(TARGET_QCOM_DISPLAY_VARIANT)/libgenlock
+else
+LOCAL_C_INCLUDES += $(TOP)/hardware/qcom/display/libgralloc \
+                    $(TOP)/hardware/qcom/display/libgenlock
+endif
 
 LOCAL_SHARED_LIBRARIES := libutils libui libcamera_client liblog libcutils
 LOCAL_SHARED_LIBRARIES += libgenlock libbinder libdl libhardware
