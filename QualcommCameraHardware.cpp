@@ -4719,12 +4719,12 @@ bool QualcommCameraHardware::initRecord()
      * We need to pass the actual framesize with video heap, as the same
      * is used at camera MIO when negotiating with encoder.
      */
-    mRecordFrameSize = recordBufferSize;
+    mRecordFrameSize = PAD_TO_4K(recordBufferSize);
     if(mVpeEnabled && mDisEnabled){
         mRecordFrameSize = videoWidth * videoHeight * 3 / 2;
         if(mCurrentTarget == TARGET_MSM8660){
-            mRecordFrameSize = PAD_TO_2K(videoWidth * videoHeight)
-                                + PAD_TO_2K((videoWidth * videoHeight)/2);
+            mRecordFrameSize = PAD_TO_4K(PAD_TO_2K(videoWidth * videoHeight)
+                                + PAD_TO_2K((videoWidth * videoHeight)/2));
         }
     }
     ALOGV("mRecordFrameSize = %d", mRecordFrameSize);
