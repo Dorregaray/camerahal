@@ -363,14 +363,6 @@ private:
 
         const char *mName;
     };
-    struct DispMemPool : public MemPool {
-        DispMemPool(int fd, int buffer_size,
-            int num_buffers, int frame_size,
-            const char *name);
-            virtual ~DispMemPool();
-            int mFD;
-    };
-    sp<DispMemPool> mPreviewHeap[kPreviewBufferCount + MIN_UNDEQUEUD_BUFFER_COUNT];
 
     struct AshmemPool : public MemPool {
         AshmemPool(int buffer_size, int num_buffers,
