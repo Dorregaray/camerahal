@@ -3333,15 +3333,11 @@ void QualcommCameraHardware::release()
     ALOGV("release X: mCameraRunning = %d, mFrameThreadRunning = %d", mCameraRunning, mFrameThreadRunning);
     ALOGV("mVideoThreadRunning = %d, mSnapshotThreadRunning = %d, mJpegThreadRunning = %d", mVideoThreadRunning, mSnapshotThreadRunning, mJpegThreadRunning);
     ALOGV("camframe_timeout_flag = %d, mAutoFocusThreadRunning = %d", camframe_timeout_flag, mAutoFocusThreadRunning);
-
-    libmmcamera = NULL;
-    mMMCameraDLRef.clear();
 }
 
 QualcommCameraHardware::~QualcommCameraHardware()
 {
     ALOGI("~QualcommCameraHardware E");
-    LINK_mm_camera_destroy();
 
     if (mCurrentTarget == TARGET_MSM7630 || mCurrentTarget == TARGET_QSD8250 || mCurrentTarget == TARGET_MSM8660) {
         delete [] recordframes;
@@ -3349,6 +3345,10 @@ QualcommCameraHardware::~QualcommCameraHardware()
         delete [] record_buffers_tracking_flag;
         record_buffers_tracking_flag = NULL;
     }
+
+    libmmcamera = NULL;
+    mMMCameraDLRef.clear();
+
     ALOGI("~QualcommCameraHardware X");
 }
 
@@ -6398,6 +6398,7 @@ void * QualcommCameraHardware::MMCameraDL::pointer(){
 
 QualcommCameraHardware::MMCameraDL::~MMCameraDL(){
     ALOGV("~MMCameraDL: E");
+    LINK_mm_camera_destroy();
 #if DLOPEN_LIBMMCAMERA
     if (libmmcamera != NULL) {
         ::dlclose(libmmcamera);
