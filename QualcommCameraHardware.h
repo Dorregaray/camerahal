@@ -223,8 +223,7 @@ namespace android {
 class QualcommCameraHardware : public RefBase{
 public:
 
-    //virtual sp<IMemoryHeap> getPreviewHeap() const;
-    //virtual sp<IMemoryHeap> getRawHeap() const;
+    virtual ~QualcommCameraHardware();
 
     void setCallbacks(camera_notify_callback notify_cb,
                             camera_data_callback data_cb,
@@ -283,7 +282,6 @@ public:
 
 private:
     QualcommCameraHardware();
-    virtual ~QualcommCameraHardware();
     status_t startPreviewInternal();
     status_t setHistogramOn();
     status_t setHistogramOff();

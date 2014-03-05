@@ -643,6 +643,7 @@ int camera_device_close(hw_device_t* device)
             gCameraHals[dev->cameraid]->release();
             dev->released = true;
         }
+        delete(gCameraHals[dev->cameraid]);
         gCameraHals[dev->cameraid] = NULL;
         gCamerasOpen--;
 
