@@ -1,4 +1,6 @@
-The Kitkat camera wrapper for HP TouchPad running 3.4 kernel
+The Kitkat camera wrapper for HP TouchPad running 3.x kernel
 ----------------
 
-NOT WORKING YET
+The camera wrapper uses ION for memory allocations but still relies on
+proprietary Qualcomm camera libs that depends on PMEM - the kernel must
+support ION and PMEM ADSP allocators (~6MB is enough for PMEM ADSP).
